@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-natural-bg: var(--bg-main);
+  --color-natural-ink: var(--text-main);
+  --color-natural-olive: #6B705C;
+  --color-natural-terracotta: #CB997E;
+  --color-natural-mute: #A5A58D;
+  --color-natural-peach: #FFE8D6;
+  --color-natural-line: var(--border-main);
+
+  /* Dark palette */
+  --color-dark-bg-deep: #1a1a2e;
+  --color-dark-bg-main: #16213e;
+  --color-dark-card: #1e293b;
+  --color-dark-text: #e2e8f0;
+}
+
+:root {
+  --bg-main: #F9F7F2;
+  --text-main: #434338;
+  --border-main: #E5E2D9;
+}
+
+.dark {
+  --bg-main: #16213e;
+  --text-main: #e2e8f0;
+  --border-main: rgba(255, 255, 255, 0.05);
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    @apply transition-colors duration-300 font-sans;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+
+.font-serif {
+  font-family: "Cormorant Garamond", serif;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(229, 226, 217, 0.5);
+}
+
+.dark .glass-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+

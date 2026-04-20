@@ -1,0 +1,146 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helpers
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // Validation Blueprints
+    function isValidScheduleItem(data) {
+      return data.keys().hasAll(['title', 'startTime', 'date', 'userId', 'activityType'])
+        && data.title is string && data.title.size() <= 100
+        && data.startTime is string && data.startTime.size() <= 50
+        && data.date is string && data.date.size() <= 20
+        && data.activityType in ['Pekerjaan', 'Olahraga', 'Hiburan', 'Belajar', 'Lainnya']
+        && data.userId == request.auth.uid;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['type', 'amount', 'date', 'userId', 'category'])
+        && data.type in ['income', 'expense']
+        && data.amount is number && data.amount > 0
+        && data.category is string && data.category.size() <= 100
+        && data.date is string && data.date.size() <= 20
+        && data.userId == request.auth.uid;
+    }
+
+    function isValidProfile(data) {
+      return data.keys().hasAll(['height', 'weight', 'age', 'goal', 'userId', 'gender'])
+        && data.userId == request.auth.uid
+        && data.height is number && data.height >= 50 && data.height <= 300
+        && data.weight is number && data.weight >= 20 && data.weight <= 500
+        && data.age is number && data.age >= 1 && data.age <= 150
+        && data.gender in ['male', 'female']
+        && data.goal in ['Bulking', 'Cutting', 'Maintenance'];
+    }
+
+    function isValidAchievement(data) {
+      return data.keys().hasAll(['type', 'title', 'description', 'unlockedAt'])
+        && data.type in ['streak', 'workout', 'weight', 'budget'];
+    }
+
+    function isValidSharedItem(data) {
+      return data.keys().hasAll(['type', 'title', 'creatorId', 'content', 'createdAt'])
+        && data.type in ['workout', 'recipe', 'finance']
+        && data.creatorId == request.auth.uid;
+    }
+
+    function isValidChallenge(data) {
+      return data.keys().hasAll(['type', 'title', 'ownerId', 'participants', 'status'])
+        && data.type in ['budget', 'fitness']
+        && data.ownerId == request.auth.uid;
+    }
+
+    function isValidDailyProgress(data) {
+      return data.loggedMeals is list && data.loggedMeals.size() <= 50;
+    }
+
+    // Collection Rules
+    match /users/{userId} {
+      match /schedule/{itemId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(itemId) && isValidScheduleItem(incoming());
+        allow update: if isOwner(userId) && isValidScheduleItem(incoming()) 
+          && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId);
+      }
+
+      match /transactions/{transactionId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(transactionId) && isValidTransaction(incoming());
+        allow update: if isOwner(userId) && isValidTransaction(incoming())
+          && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId);
+      }
+
+      match /profile/data {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && isValidProfile(incoming());
+      }
+
+      match /workout_plans/{planId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(planId) && incoming().userId == userId;
+        allow delete: if isOwner(userId);
+      }
+
+      match /meal_plans/{planId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(planId) && incoming().userId == userId;
+        allow delete: if isOwner(userId);
+      }
+
+      match /budgets/{monthKey} {
+        allow read, write: if isOwner(userId) && isValidId(monthKey);
+      }
+
+      match /weight_history/{entryId} {
+        allow read, write: if isOwner(userId) && isValidId(entryId);
+      }
+
+      match /achievements/{achievementId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(achievementId) && isValidAchievement(incoming());
+      }
+
+      match /following/{followedId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && isValidId(followedId);
+      }
+
+      match /followers/{followerId} {
+        allow read: if isOwner(userId);
+        allow write: if isSignedIn() && isValidId(followerId);
+      }
+
+      match /daily_progress/{date} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && isValidId(date);
+
+        match /meals/{mealId} {
+          allow read, write: if isOwner(userId);
+        }
+      }
+    }
+
+    match /shared_items/{itemId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidSharedItem(incoming());
+      allow delete: if isSignedIn() && existing().creatorId == request.auth.uid;
+    }
+
+    match /challenges/{challengeId} {
+      allow read: if isSignedIn() && (resource.data.ownerId == request.auth.uid || request.auth.uid in resource.data.participants);
+      allow create: if isSignedIn() && isValidChallenge(incoming());
+      allow update: if isSignedIn() && (request.auth.uid in incoming().participants || incoming().ownerId == existing().ownerId);
+    }
+  }
+}

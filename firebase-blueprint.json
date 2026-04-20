@@ -1,0 +1,155 @@
+{
+  "entities": {
+    "ScheduleItem": {
+      "title": "Schedule Item",
+      "description": "Represents a user's daily activity or event.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "activityType": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "day": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "startTime", "date", "userId"]
+    },
+    "FinancialTransaction": {
+      "title": "Financial Transaction",
+      "description": "Represents income or expense tracking.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["income", "expense"] },
+        "category": { "type": "string" },
+        "amount": { "type": "number" },
+        "quantity": { "type": "number" },
+        "date": { "type": "string", "format": "date" },
+        "source": { "type": "string" },
+        "description": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "amount", "date", "userId"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User's physiological and goal-related data for AI recommendations.",
+      "type": "object",
+      "properties": {
+        "height": { "type": "number" },
+        "weight": { "type": "number" },
+        "targetWeight": { "type": "number" },
+        "age": { "type": "number" },
+        "gender": { "type": "string", "enum": ["male", "female"] },
+        "goal": { "type": "string" },
+        "job": { "type": "string" },
+        "budget": { "type": "number" },
+        "equipment": { "type": "string" },
+        "userId": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId"]
+    },
+    "WorkoutPlan": {
+      "title": "Workout Plan",
+      "description": "AI-generated or user-defined workout routine.",
+      "type": "object",
+      "properties": {
+        "day": { "type": "string" },
+        "exercises": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "userId": { "type": "string" },
+        "generatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "MealPlan": {
+      "title": "Meal Plan",
+      "description": "AI-generated or user-defined meal recommendations.",
+      "type": "object",
+      "properties": {
+        "day": { "type": "string" },
+        "meals": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "userId": { "type": "string" },
+        "generatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "DailyProgress": {
+      "title": "Daily Progress",
+      "description": "Tracking daily fulfillment of goals, specifically manual meal logging with nutrients.",
+      "type": "object",
+      "properties": {
+        "loggedMeals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "calories": { "type": "number" },
+              "protein": { "type": "number" },
+              "carbs": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "Budget": {
+      "title": "Monthly Budget",
+      "description": "Category-specific budget limits for a given month.",
+      "type": "object",
+      "properties": {
+        "categories": { "type": "object" }
+      }
+    },
+    "WeightEntry": {
+      "title": "Weight Entry",
+      "description": "Historical weight log entry.",
+      "type": "object",
+      "properties": {
+        "weight": { "type": "number" },
+        "date": { "type": "string", "format": "date" },
+        "userId": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}/schedule/{itemId}": {
+      "schema": "ScheduleItem",
+      "description": "User's daily schedule items."
+    },
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": "FinancialTransaction",
+      "description": "User's income and expense records."
+    },
+    "/users/{userId}/profile/data": {
+      "schema": "UserProfile",
+      "description": "User's fitness and nutritional profile."
+    },
+    "/users/{userId}/workout_plans/{planId}": {
+      "schema": "WorkoutPlan",
+      "description": "User's workout routines."
+    },
+    "/users/{userId}/meal_plans/{planId}": {
+      "schema": "MealPlan",
+      "description": "User's nutrition plans."
+    },
+    "/users/{userId}/daily_progress/{date}": {
+      "schema": "DailyProgress",
+      "description": "User's daily goal fulfillment progress."
+    },
+    "/users/{userId}/budgets/{monthKey}": {
+      "schema": "Budget",
+      "description": "User's monthly category-specific budget limits."
+    },
+    "/users/{userId}/weight_history/{entryId}": {
+      "schema": "WeightEntry",
+      "description": "User's historical weight logs."
+    }
+  }
+}
