@@ -10,6 +10,7 @@ export interface ScheduleItem {
   userId: string;
   recurrence?: 'none' | 'daily' | 'weekly' | 'monthly';
   reminderMinutes?: number;
+  completedDates?: string[];
 }
 
 export interface Transaction {

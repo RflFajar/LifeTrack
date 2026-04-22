@@ -24,7 +24,8 @@ import {
   AlertTriangle, 
   Target,
   Briefcase,
-  Heart
+  Heart,
+  ArrowUpRight
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { format, parseISO, startOfMonth } from 'date-fns';
@@ -38,7 +39,7 @@ import { cn } from '../utils/cn';
 import { validateTransaction } from '../utils/validators';
 import { showToast } from '../context/ToastContext';
 import { Transaction } from '../types';
-import { TRANSACTION_CATEGORIES } from '../constants';
+import { TRANSACTION_CATEGORIES, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../constants';
 import { exportToCSV } from '../utils/export';
 import { Button } from '../components/ui/Button';
 import { Skeleton, CardSkeleton } from '../components/ui/Skeleton';
@@ -60,7 +61,8 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   MoreHorizontal,
   Briefcase,
   Heart,
-  Sparkles
+  Sparkles,
+  ArrowUpRight
 };
 
 import { useProfile } from '../hooks/useProfile';
@@ -181,23 +183,38 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
   const [txLoading, setTxLoading] = useState(false);
 
   const { totalSavings, totalPureExpenses, dailyMoney } = useMemo(() => {
-    let savings = 0;
+    let savingsBalance = 0;
     let pureExpenses = 0;
+    let pureIncomes = 0;
+    
     txs.forEach(tx => {
-      if (tx.type === 'expense') {
-        if (tx.category === 'tabungan') {
-          savings += tx.amount;
+      if (tx.category === 'tabungan') {
+        if (tx.type === 'expense') {
+          savingsBalance += tx.amount; // Menabung
         } else {
-          pureExpenses += tx.amount;
+          savingsBalance -= tx.amount; // Mengambil tabungan
+        }
+      } else {
+        if (tx.type === 'expense') {
+          pureExpenses += tx.amount; 
+        } else {
+          pureIncomes += tx.amount;
         }
       }
     });
+
     return {
-      totalSavings: savings,
+      totalSavings: savingsBalance,
       totalPureExpenses: pureExpenses,
-      dailyMoney: balance.income - pureExpenses - savings
+      dailyMoney: pureIncomes - pureExpenses - (savingsBalance > 0 ? 0 : 0) // Logical balance
     };
-  }, [txs, balance]);
+  }, [txs]);
+
+  // We actually need a more accurate dailyMoney calculation
+  // dailyMoney = All Incomes (non-savings) - All Expenses (non-savings) - Current Savings Balance
+  // Wait, if I take from savings (Income: Tabungan), it reduces savingsBalance.
+  // So Sisa Uang Harian is basically (Total Income - Total Expense).
+  const finalDailyMoney = useMemo(() => balance.income - balance.expense, [balance]);
 
   if (transactionsLoading) {
     return (
@@ -310,7 +327,7 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
           </div>
           <div>
             <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest">Sisa Uang Harian</p>
-            <p className="text-2xl font-serif font-bold text-natural-ink dark:text-dark-text italic">{formatCurrency(dailyMoney)}</p>
+            <p className="text-2xl font-serif font-bold text-natural-ink dark:text-dark-text italic">{formatCurrency(finalDailyMoney)}</p>
           </div>
           <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-natural-olive/10 rounded-full" />
         </Card>
@@ -428,7 +445,7 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
             </div>
 
             <div className="space-y-5">
-              {TRANSACTION_CATEGORIES.map(category => {
+              {EXPENSE_CATEGORIES.map(category => {
                 const limit = budgets[category.id] || 0;
                 if (limit === 0) return null;
                 const spent = spendingPerCategory[category.id] || 0;
@@ -710,7 +727,7 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
               </div>
 
               <div className="p-8 overflow-y-auto space-y-6 flex-1 no-scrollbar">
-                {TRANSACTION_CATEGORIES.map(category => (
+                {EXPENSE_CATEGORIES.map(category => (
                   <div key={category.id} className="grid grid-cols-1 md:grid-cols-2 items-center gap-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2.5 bg-natural-bg rounded-xl text-natural-olive">

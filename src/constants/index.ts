@@ -43,12 +43,15 @@ export const EXPENSE_CATEGORIES = [
 export const INCOME_CATEGORIES = [
   { id: 'gaji', label: 'Gaji / Kerja', icon: 'Briefcase' },
   { id: 'orang_tua', label: 'Dari Orang Tua', icon: 'Heart' },
+  { id: 'tabungan', label: 'Ambil dari Tabungan', icon: 'ArrowUpRight' },
   { id: 'bonus', label: 'Bonus / Komisi', icon: 'Sparkles' },
   { id: 'investasi', label: 'Investasi', icon: 'TrendingUp' },
   { id: 'lainnya', label: 'Lainnya', icon: 'MoreHorizontal' }
 ];
 
-export const TRANSACTION_CATEGORIES = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES];
+// Helper to get unique categories by ID for lookups (like icons/labels)
+const allCats = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES];
+export const TRANSACTION_CATEGORIES = Array.from(new Map(allCats.map(c => [c.id, c])).values());
 
 export const THEME = {
   colors: {

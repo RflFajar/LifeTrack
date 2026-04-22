@@ -20,7 +20,10 @@ service cloud.firestore {
         && data.startTime is string && data.startTime.size() <= 50
         && data.date is string && data.date.size() <= 20
         && data.activityType in ['Pekerjaan', 'Olahraga', 'Hiburan', 'Belajar', 'Lainnya']
-        && data.userId == request.auth.uid;
+        && data.userId == request.auth.uid
+        && (!('recurrence' in data) || data.recurrence in ['none', 'daily', 'weekly', 'monthly'])
+        && (!('reminderMinutes' in data) || data.reminderMinutes is number)
+        && (!('completedDates' in data) || data.completedDates is list);
     }
 
     function isValidTransaction(data) {
@@ -63,6 +66,13 @@ service cloud.firestore {
       return data.loggedMeals is list && data.loggedMeals.size() <= 50;
     }
 
+    function isValidWorkoutLog(data) {
+      return data.keys().hasAll(['userId', 'date', 'completed'])
+        && data.userId == request.auth.uid
+        && data.date is string && data.date.size() <= 20
+        && data.completed is bool;
+    }
+
     // Collection Rules
     match /users/{userId} {
       match /schedule/{itemId} {
@@ -70,6 +80,12 @@ service cloud.firestore {
         allow create: if isOwner(userId) && isValidId(itemId) && isValidScheduleItem(incoming());
         allow update: if isOwner(userId) && isValidScheduleItem(incoming()) 
           && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId);
+      }
+
+      match /workout_logs/{logId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(logId) && isValidWorkoutLog(incoming());
         allow delete: if isOwner(userId);
       }
 

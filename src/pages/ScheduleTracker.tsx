@@ -12,7 +12,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { User } from 'firebase/auth';
-import { format, parseISO, isAfter, subMinutes } from 'date-fns';
+import { format, parseISO, isAfter, subMinutes, isSameDay, addDays, isBefore, startOfDay, differenceInDays, differenceInWeeks, differenceInMonths } from 'date-fns';
 import { Card } from '../components/ui/Card';
 import { useSchedule } from '../hooks/useSchedule';
 import { ACTIVITY_TYPES } from '../constants';
@@ -21,7 +21,7 @@ import { showToast } from '../context/ToastContext';
 import { ScheduleItem } from '../types';
 import { exportToICal, syncWithGoogleCalendar } from '../services/externalSync';
 import { Button } from '../components/ui/Button';
-import { Share2, Download, RefreshCw } from 'lucide-react';
+import { Share2, Download, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 interface ScheduleTrackerProps {
@@ -30,6 +30,7 @@ interface ScheduleTrackerProps {
 
 export const ScheduleTracker = ({ user }: ScheduleTrackerProps): React.ReactElement => {
   const { items, addItem, updateItem, deleteItem } = useSchedule(user.uid);
+  const [viewDate, setViewDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [title, setTitle] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -40,6 +41,50 @@ export const ScheduleTracker = ({ user }: ScheduleTrackerProps): React.ReactElem
 
   const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
 
+  const isItemVisibleOnDate = (item: ScheduleItem, targetDateStr: string) => {
+    const targetDate = startOfDay(parseISO(targetDateStr));
+    const itemDate = startOfDay(parseISO(item.date));
+
+    // If target date is before start date, item is not visible
+    if (isBefore(targetDate, itemDate)) return false;
+
+    switch (item.recurrence) {
+      case 'none':
+        return isSameDay(targetDate, itemDate);
+      case 'daily':
+        return true; // Any day after or same as start date
+      case 'weekly':
+        return differenceInDays(targetDate, itemDate) % 7 === 0;
+      case 'monthly':
+        return targetDate.getDate() === itemDate.getDate();
+      default:
+        return isSameDay(targetDate, itemDate);
+    }
+  };
+
+  const filteredItemsByDate = React.useMemo(() => {
+    return items.filter(item => isItemVisibleOnDate(item, viewDate))
+                .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  }, [items, viewDate]);
+
+  const toggleComplete = async (item: ScheduleItem) => {
+    const completedDates = item.completedDates || [];
+    const isCompleted = completedDates.includes(viewDate);
+    
+    let newCompletedDates;
+    if (isCompleted) {
+      newCompletedDates = completedDates.filter(d => d !== viewDate);
+    } else {
+      newCompletedDates = [...completedDates, viewDate];
+    }
+    
+    await updateItem(item.id, { completedDates: newCompletedDates });
+    
+    if (!isCompleted) {
+      showToast(`Yeay! "${item.title}" selesai untuk hari ini!`, 'success');
+    }
+  };
+
   // Notification logic
   useEffect(() => {
     if (Notification.permission === 'default') {
@@ -48,13 +93,15 @@ export const ScheduleTracker = ({ user }: ScheduleTrackerProps): React.ReactElem
 
     const interval = setInterval(() => {
       const now = new Date();
+      const todayStr = format(now, 'yyyy-MM-dd');
+      
       items.forEach(item => {
-        if (!item.reminderMinutes) return;
+        if (!item.reminderMinutes || !isItemVisibleOnDate(item, todayStr)) return;
         
-        const scheduleDate = parseISO(`${item.date}T${item.startTime}`);
+        // Use today's date but the item's startTime for recurring items
+        const scheduleDate = parseISO(`${todayStr}T${item.startTime}`);
         const reminderTime = subMinutes(scheduleDate, item.reminderMinutes);
         
-        // Trigger if current time is within the reminder window (1 min)
         const diff = now.getTime() - reminderTime.getTime();
         if (diff >= 0 && diff < 60000) {
           if (Notification.permission === 'granted') {
@@ -224,16 +271,50 @@ export const ScheduleTracker = ({ user }: ScheduleTrackerProps): React.ReactElem
       </Card>
 
       <div className="md:col-span-2 space-y-6">
-        <div className="flex items-center justify-between px-2">
-          <h3 className="text-xl font-serif italic text-natural-olive dark:text-dark-text">Timeline Agenda</h3>
+        <div className="bg-white dark:bg-dark-card p-4 rounded-[32px] border border-natural-line/50 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setViewDate(format(addDays(parseISO(viewDate), -1), 'yyyy-MM-dd'))}
+              className="p-2 hover:bg-natural-bg rounded-full transition-colors text-natural-olive"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="text-center">
+              <h4 className="font-serif font-bold text-natural-ink">
+                {isSameDay(parseISO(viewDate), new Date()) ? 'Hari Ini' : format(parseISO(viewDate), 'dd MMMM yyyy')}
+              </h4>
+              <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest">
+                {format(parseISO(viewDate), 'EEEE')}
+              </p>
+            </div>
+            <button 
+              onClick={() => setViewDate(format(addDays(parseISO(viewDate), 1), 'yyyy-MM-dd'))}
+              className="p-2 hover:bg-natural-bg rounded-full transition-colors text-natural-olive"
+            >
+              <ChevronRight size={20} />
+            </button>
+            {!isSameDay(parseISO(viewDate), new Date()) && (
+              <button 
+                onClick={() => setViewDate(format(new Date(), 'yyyy-MM-dd'))}
+                className="ml-2 text-[9px] font-bold text-natural-olive hover:underline uppercase tracking-widest"
+              >
+                Hari Ini
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => exportToICal(items)}>
+            <Button variant="outline" size="sm" onClick={() => exportToICal(items)} aria-label="Ekspor ke iCal">
               <Download size={14} className="mr-2" /> iCal
             </Button>
-            <Button variant="outline" size="sm" onClick={() => syncWithGoogleCalendar(items)}>
-              <RefreshCw size={14} className="mr-2" /> Google
+            <Button variant="outline" size="sm" onClick={() => syncWithGoogleCalendar(items)} aria-label="Sinkronisasi Google Calendar">
+              <RefreshCw size={14} className="mr-2" /> Sync
             </Button>
-            {Notification.permission !== 'granted' && (
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between px-2">
+          <h3 className="text-xl font-serif italic text-natural-olive dark:text-dark-text">Jadwal Agenda</h3>
+          {Notification.permission !== 'granted' && (
             <button 
               onClick={() => Notification.requestPermission()}
               className="text-[10px] font-bold text-natural-terracotta bg-natural-peach/30 px-3 py-1 rounded-full flex items-center gap-1 uppercase tracking-widest"
@@ -242,45 +323,63 @@ export const ScheduleTracker = ({ user }: ScheduleTrackerProps): React.ReactElem
             </button>
           )}
         </div>
-      </div>
 
-      {items.length === 0 ? (
+        {filteredItemsByDate.length === 0 ? (
           <div className="bg-white rounded-[40px] p-20 text-center border-2 border-dashed border-natural-line/50">
             <Calendar className="w-12 h-12 text-natural-line mx-auto mb-4" />
-            <p className="text-natural-mute font-serif italic">Belum ada agenda terdaftar.</p>
+            <p className="text-natural-mute font-serif italic">Tidak ada agenda untuk tanggal ini.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {items.map(item => (
-              <motion.div 
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                key={item.id} 
-                className="bg-white p-6 rounded-[32px] shadow-sm border border-natural-line/30 flex items-center justify-between group hover:shadow-md transition-all"
-              >
-                <div className="flex items-center gap-6">
-                  <div className={cn(
-                    "w-2 h-12 rounded-full",
-                    item.activityType === 'Pekerjaan' ? 'bg-natural-olive' : 
-                    item.activityType === 'Kesehatan' ? 'bg-natural-terracotta' : 'bg-natural-mute'
-                  )} />
-                  <div>
-                    <h4 className="font-serif font-bold text-natural-ink text-lg">{item.title}</h4>
-                    <div className="flex flex-wrap items-center gap-3 mt-1">
+            {filteredItemsByDate.map(item => {
+              const isCompleted = item.completedDates?.includes(viewDate);
+              return (
+                <motion.div 
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  key={item.id} 
+                  className={cn(
+                    "bg-white p-6 rounded-[32px] shadow-sm border border-natural-line/30 flex items-center justify-between group hover:shadow-md transition-all",
+                    isCompleted && "opacity-60 grayscale-[0.5]"
+                  )}
+                >
+                  <div className="flex items-center gap-6">
+                    <button 
+                      onClick={() => toggleComplete(item)}
+                      className={cn(
+                        "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
+                        isCompleted 
+                          ? "bg-natural-olive border-natural-olive text-white" 
+                          : "border-natural-line hover:border-natural-olive"
+                      )}
+                    >
+                      {isCompleted && <CheckCircle2 size={14} />}
+                    </button>
+                    <div className={cn(
+                      "w-1 h-10 rounded-full",
+                      item.activityType === 'Pekerjaan' ? 'bg-natural-olive' : 
+                      item.activityType === 'Kesehatan' ? 'bg-natural-terracotta' : 'bg-natural-mute'
+                    )} />
+                    <div>
+                      <h4 className={cn(
+                        "font-serif font-bold text-natural-ink text-lg",
+                        isCompleted && "line-through text-natural-mute"
+                      )}>{item.title}</h4>
+                      <div className="flex flex-wrap items-center gap-3 mt-1">
                       <p className="text-[11px] text-natural-mute flex items-center gap-1.5 font-bold uppercase tracking-tight">
                         <Clock size={12} className="text-natural-olive" />
                         {item.startTime} {item.endTime ? `— ${item.endTime}` : ''}
                       </p>
                       <span className="text-natural-line text-[10px]">•</span>
                       <p className="text-[11px] text-natural-mute font-bold uppercase tracking-tight">
-                        {format(parseISO(item.date), 'dd MMM yyyy')}
+                        {format(parseISO(viewDate), 'dd MMM yyyy')}
                       </p>
                       {item.recurrence && item.recurrence !== 'none' && (
                         <>
                           <span className="text-natural-line text-[10px]">•</span>
-                          <span className="flex items-center gap-1 text-[10px] font-bold text-natural-olive bg-natural-bg px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                            <Repeat size={10} /> {item.recurrence}
+                          <span className="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-tighter border border-blue-100">
+                            <Repeat size={10} /> Rutin {item.recurrence === 'daily' ? 'Tiap Hari' : item.recurrence === 'weekly' ? 'Tiap Minggu' : 'Tiap Bulan'}
                           </span>
                         </>
                       )}
@@ -317,10 +416,11 @@ export const ScheduleTracker = ({ user }: ScheduleTrackerProps): React.ReactElem
                   </button>
                 </div>
               </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
 
       {/* Edit Modal */}
       <AnimatePresence>

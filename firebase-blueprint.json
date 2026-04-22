@@ -12,7 +12,10 @@
         "day": { "type": "string" },
         "date": { "type": "string", "format": "date" },
         "userId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "recurrence": { "type": "string", "enum": ["none", "daily", "weekly", "monthly"] },
+        "reminderMinutes": { "type": "number" },
+        "completedDates": { "type": "array", "items": { "type": "string" } }
       },
       "required": ["title", "startTime", "date", "userId"]
     },
@@ -116,12 +119,28 @@
         "date": { "type": "string", "format": "date" },
         "userId": { "type": "string" }
       }
+    },
+    "WorkoutLog": {
+      "title": "Workout Log",
+      "description": "Represents completion of a daily workout.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "completed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "completed"]
     }
   },
   "firestore": {
     "/users/{userId}/schedule/{itemId}": {
       "schema": "ScheduleItem",
       "description": "User's daily schedule items."
+    },
+    "/users/{userId}/workout_logs/{logId}": {
+      "schema": "WorkoutLog",
+      "description": "User's daily workout completion logs."
     },
     "/users/{userId}/transactions/{transactionId}": {
       "schema": "FinancialTransaction",

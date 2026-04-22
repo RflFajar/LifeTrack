@@ -36,12 +36,18 @@ export const IncomeExpenseChart = ({ transactions }: IncomeExpenseChartProps) =>
     const monthKey = format(txDate, 'yyyy-MM');
     const monthData = last6Months.find(m => m.monthKey === monthKey);
     if (monthData) {
-      if (tx.type === 'income') {
-        monthData.income += tx.amount;
-      } else if (tx.category === 'tabungan') {
-        monthData.savings += tx.amount;
+      if (tx.category === 'tabungan') {
+        if (tx.type === 'expense') {
+          monthData.savings += tx.amount;
+        } else {
+          monthData.savings -= tx.amount; // Withdraw reduces the savings bar
+        }
       } else {
-        monthData.expense += tx.amount;
+        if (tx.type === 'income') {
+          monthData.income += tx.amount;
+        } else {
+          monthData.expense += tx.amount;
+        }
       }
     }
   });

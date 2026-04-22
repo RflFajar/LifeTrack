@@ -9,7 +9,8 @@ import {
   X,
   BrainCircuit,
   TrendingUp,
-  Scale
+  Scale,
+  CheckCircle2
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { format } from 'date-fns';
@@ -30,6 +31,7 @@ import { StatLabel } from '../components/ui/StatLabel';
 import { NutritionStat } from '../components/ui/NutritionStat';
 import { useProfile } from '../hooks/useProfile';
 import { useWorkoutPlan } from '../hooks/useWorkoutPlan';
+import { useWorkoutLogs } from '../hooks/useWorkoutLogs';
 import { useMealPlan } from '../hooks/useMealPlan';
 import { useDailyProgress } from '../hooks/useDailyProgress';
 import { useWeightHistory } from '../hooks/useWeightHistory';
@@ -53,6 +55,7 @@ export const HealthTracker = ({ user }: HealthTrackerProps): React.ReactElement 
   const today = format(new Date(), 'yyyy-MM-dd');
   const { profile, saveProfile, bmi, loading: profileLoading } = useProfile(user.uid);
   const { plans: workoutPlans, generatePlan: generateWorkoutPlan, loading: workoutLoading } = useWorkoutPlan(user.uid, profile);
+  const { completedToday: workoutDoneToday, logWorkout } = useWorkoutLogs(user.uid);
   const { mealPlan, generatePlan: generateMealPlan, loading: mealLoading } = useMealPlan(user.uid, profile);
   const { loggedMeals, totals, targets, addMeal, removeMeal } = useDailyProgress(user.uid, mealPlan, today);
   const { history: weightHistory, addWeight } = useWeightHistory(user.uid);
@@ -336,6 +339,22 @@ export const HealthTracker = ({ user }: HealthTrackerProps): React.ReactElement 
                       >
                         Lihat rincian lengkap »
                       </button>
+
+                      <div className="mt-6 pt-6 border-t border-white/20">
+                        {workoutDoneToday ? (
+                          <div className="flex items-center justify-center gap-2 text-natural-peach bg-white/10 p-3 rounded-2xl">
+                            <CheckCircle2 size={16} />
+                            <span className="text-xs font-bold italic">Latihan Hari Ini Selesai!</span>
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={logWorkout}
+                            className="w-full bg-natural-peach text-natural-terracotta p-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-black/10"
+                          >
+                            <CheckCircle2 size={16} /> Selesaikan Latihan
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

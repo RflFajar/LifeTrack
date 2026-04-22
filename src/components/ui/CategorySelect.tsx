@@ -12,7 +12,8 @@ import {
   Briefcase,
   Heart,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  ArrowUpRight
 } from 'lucide-react';
 import { TRANSACTION_CATEGORIES, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../../constants';
 import { cn } from '../../utils/cn';
@@ -29,7 +30,8 @@ const CATEGORY_ICONS: Record<string, any> = {
   Briefcase,
   Heart,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  ArrowUpRight
 };
 
 interface CategorySelectProps {
