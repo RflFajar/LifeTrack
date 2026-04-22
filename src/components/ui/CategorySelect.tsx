@@ -1,6 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Utensils, Car, Gamepad2, Receipt, HeartPulse, GraduationCap, Wallet, MoreHorizontal } from 'lucide-react';
-import { TRANSACTION_CATEGORIES } from '../../constants';
+import { 
+  ChevronDown, 
+  Utensils, 
+  Car, 
+  Gamepad2, 
+  Receipt, 
+  HeartPulse, 
+  GraduationCap, 
+  Wallet, 
+  MoreHorizontal,
+  Briefcase,
+  Heart,
+  Sparkles,
+  TrendingUp
+} from 'lucide-react';
+import { TRANSACTION_CATEGORIES, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../../constants';
 import { cn } from '../../utils/cn';
 
 const CATEGORY_ICONS: Record<string, any> = {
@@ -11,21 +25,27 @@ const CATEGORY_ICONS: Record<string, any> = {
   HeartPulse,
   GraduationCap,
   Wallet,
-  MoreHorizontal
+  MoreHorizontal,
+  Briefcase,
+  Heart,
+  Sparkles,
+  TrendingUp
 };
 
 interface CategorySelectProps {
   value: string;
   onChange: (value: string) => void;
+  type?: 'income' | 'expense';
   className?: string;
 }
 
-export const CategorySelect = ({ value, onChange, className }: CategorySelectProps) => {
+export const CategorySelect = ({ value, onChange, type = 'expense', className }: CategorySelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const selectedCategory = TRANSACTION_CATEGORIES.find(c => c.id === value) || TRANSACTION_CATEGORIES[0];
-  const SelectedIcon = CATEGORY_ICONS[selectedCategory.icon];
+  const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const selectedCategory = categories.find(c => c.id === value) || categories[0];
+  const SelectedIcon = CATEGORY_ICONS[selectedCategory.icon] || MoreHorizontal;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -53,8 +73,8 @@ export const CategorySelect = ({ value, onChange, className }: CategorySelectPro
 
       {isOpen && (
         <div className="absolute z-50 w-full mt-2 bg-white border border-natural-line rounded-[24px] shadow-xl overflow-hidden py-2 animate-in fade-in zoom-in-95 duration-200 origin-top">
-          {TRANSACTION_CATEGORIES.map((category) => {
-            const Icon = CATEGORY_ICONS[category.icon];
+          {categories.map((category) => {
+            const Icon = CATEGORY_ICONS[category.icon] || MoreHorizontal;
             return (
               <button
                 key={category.id}

@@ -29,7 +29,7 @@ export const INITIAL_MEAL_FORM = {
   carbs: 0
 };
 
-export const TRANSACTION_CATEGORIES = [
+export const EXPENSE_CATEGORIES = [
   { id: 'makanan', label: 'Makanan', icon: 'Utensils' },
   { id: 'transportasi', label: 'Transportasi', icon: 'Car' },
   { id: 'hiburan', label: 'Hiburan', icon: 'Gamepad2' },
@@ -39,6 +39,16 @@ export const TRANSACTION_CATEGORIES = [
   { id: 'tabungan', label: 'Tabungan', icon: 'Wallet' },
   { id: 'lainnya', label: 'Lainnya', icon: 'MoreHorizontal' }
 ];
+
+export const INCOME_CATEGORIES = [
+  { id: 'gaji', label: 'Gaji / Kerja', icon: 'Briefcase' },
+  { id: 'orang_tua', label: 'Dari Orang Tua', icon: 'Heart' },
+  { id: 'bonus', label: 'Bonus / Komisi', icon: 'Sparkles' },
+  { id: 'investasi', label: 'Investasi', icon: 'TrendingUp' },
+  { id: 'lainnya', label: 'Lainnya', icon: 'MoreHorizontal' }
+];
+
+export const TRANSACTION_CATEGORIES = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES];
 
 export const THEME = {
   colors: {

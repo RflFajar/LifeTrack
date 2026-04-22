@@ -42,7 +42,7 @@ import {
 import { formatCurrency, getBMICategory, calculateBMR } from '../utils/formatters';
 import { validateProfile } from '../utils/validators';
 import { showToast } from '../context/ToastContext';
-import { UserProfile } from '../types';
+import { UserProfile, LoggedMeal } from '../types';
 import { cn } from '../utils/cn';
 
 interface HealthTrackerProps {

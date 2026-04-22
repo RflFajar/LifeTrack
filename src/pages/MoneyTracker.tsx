@@ -20,9 +20,11 @@ import {
   HeartPulse,
   GraduationCap,
   MoreHorizontal,
-  ChevronDown,
-  AlertTriangle,
-  Target
+  ChevronDown, 
+  AlertTriangle, 
+  Target,
+  Briefcase,
+  Heart
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { format, parseISO, startOfMonth } from 'date-fns';
@@ -55,7 +57,10 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   HeartPulse,
   GraduationCap,
   Wallet,
-  MoreHorizontal
+  MoreHorizontal,
+  Briefcase,
+  Heart,
+  Sparkles
 };
 
 import { useProfile } from '../hooks/useProfile';
@@ -92,7 +97,18 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
   const [cat, setCat] = useState('makanan');
+  const [description, setDescription] = useState('');
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+
+  // Handler for type switch
+  const handleTypeSwitch = (newType: 'income' | 'expense') => {
+    setType(newType);
+    if (newType === 'income') {
+      setCat('gaji');
+    } else {
+      setCat('makanan');
+    }
+  };
 
   // Filter & Search
   const [searchTerm, setSearchTerm] = useState('');
@@ -146,8 +162,9 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
       return;
     }
     setTxLoading(true);
-    await addTransaction(type, parseFloat(amount), cat, date);
+    await addTransaction(type, parseFloat(amount), cat, date, description);
     setAmount('');
+    setDescription('');
     setTxLoading(false);
   };
 
@@ -162,6 +179,25 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
   };
 
   const [txLoading, setTxLoading] = useState(false);
+
+  const { totalSavings, totalPureExpenses, dailyMoney } = useMemo(() => {
+    let savings = 0;
+    let pureExpenses = 0;
+    txs.forEach(tx => {
+      if (tx.type === 'expense') {
+        if (tx.category === 'tabungan') {
+          savings += tx.amount;
+        } else {
+          pureExpenses += tx.amount;
+        }
+      }
+    });
+    return {
+      totalSavings: savings,
+      totalPureExpenses: pureExpenses,
+      dailyMoney: balance.income - pureExpenses - savings
+    };
+  }, [txs, balance]);
 
   if (transactionsLoading) {
     return (
@@ -267,26 +303,37 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="flex items-center gap-6 border-l-4 border-l-natural-olive relative overflow-hidden">
-          <div className="w-14 h-14 bg-natural-bg rounded-2xl flex items-center justify-center shrink-0">
-            <TrendingUp className="text-natural-olive" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="flex items-center gap-6 border-l-4 border-l-natural-olive relative overflow-hidden bg-natural-olive/5">
+          <div className="w-14 h-14 bg-white dark:bg-dark-card rounded-2xl shadow-sm flex items-center justify-center shrink-0">
+            <Wallet className="text-natural-olive" />
           </div>
           <div>
-            <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest">Total Pemasukan</p>
-            <p className="text-2xl font-serif font-bold text-natural-ink italic">{formatCurrency(balance.income)}</p>
+            <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest">Sisa Uang Harian</p>
+            <p className="text-2xl font-serif font-bold text-natural-ink dark:text-dark-text italic">{formatCurrency(dailyMoney)}</p>
           </div>
-          <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-natural-olive/5 rounded-full" />
+          <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-natural-olive/10 rounded-full" />
         </Card>
+
         <Card className="flex items-center gap-6 border-l-4 border-l-natural-terracotta relative overflow-hidden">
           <div className="w-14 h-14 bg-natural-peach/30 rounded-2xl flex items-center justify-center shrink-0">
             <TrendingDown className="text-natural-terracotta" />
           </div>
           <div>
-            <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest">Total Pengeluaran</p>
-            <p className="text-2xl font-serif font-bold text-natural-ink italic">{formatCurrency(balance.expense)}</p>
+            <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest">Total Belanja</p>
+            <p className="text-2xl font-serif font-bold text-natural-ink dark:text-dark-text italic">{formatCurrency(totalPureExpenses)}</p>
           </div>
-          <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-natural-terracotta/5 rounded-full" />
+        </Card>
+
+        <Card className="flex items-center gap-6 border-l-4 border-l-blue-500 relative overflow-hidden bg-blue-50">
+          <div className="w-14 h-14 bg-white dark:bg-dark-card rounded-2xl shadow-sm flex items-center justify-center shrink-0">
+            <Target className="text-blue-500" />
+          </div>
+          <div>
+            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest">Dana Tabungan</p>
+            <p className="text-2xl font-serif font-bold text-blue-900 italic">{formatCurrency(totalSavings)}</p>
+          </div>
+          <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-blue-500/10 rounded-full" />
         </Card>
       </div>
 
@@ -300,11 +347,11 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
             
             <div className="flex gap-2 p-1 bg-natural-bg rounded-2xl mb-6 border border-natural-line">
               <button 
-                onClick={() => setType('expense')}
+                onClick={() => handleTypeSwitch('expense')}
                 className={cn("flex-1 py-2.5 rounded-xl text-xs font-bold transition-all", type === 'expense' ? "bg-white shadow text-natural-ink" : "text-natural-mute")}
               >Pengeluaran</button>
               <button 
-                onClick={() => setType('income')}
+                onClick={() => handleTypeSwitch('income')}
                 className={cn("flex-1 py-2.5 rounded-xl text-xs font-bold transition-all", type === 'income' ? "bg-white shadow text-natural-ink" : "text-natural-mute")}
               >Pemasukan</button>
             </div>
@@ -325,9 +372,29 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
                 <CategorySelect 
                   value={cat} 
                   onChange={setCat}
+                  type={type}
                   className="mt-1"
                 />
               </div>
+
+              <AnimatePresence>
+                {(cat === 'lainnya' || description.length > 0) && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <label className="text-[10px] font-bold text-natural-mute uppercase tracking-widest">Deskripsi / Catatan</label>
+                    <input 
+                      type="text" 
+                      value={description} onChange={e => setDescription(e.target.value)}
+                      className="w-full mt-1 p-3.5 bg-natural-bg border border-natural-line rounded-2xl outline-none text-sm"
+                      placeholder={type === 'income' ? "Contoh: Bonus proyek web" : "Contoh: Beli kado ulang tahun"}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div>
                 <label className="text-[10px] font-bold text-natural-mute uppercase tracking-widest">Tanggal</label>
@@ -519,10 +586,16 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
                     >
                       <div className="flex items-center gap-4 flex-1">
                         <div className={cn(
-                          "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm",
+                          "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm relative",
+                          tx.category === 'tabungan' ? "bg-blue-100 text-blue-600 ring-4 ring-blue-50" : 
                           tx.type === 'income' ? "bg-natural-olive/10 text-natural-olive" : "bg-natural-terracotta/10 text-natural-terracotta"
                         )}>
                           {getCategoryIcon(tx.category)}
+                          {tx.category === 'tabungan' && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                              <Target size={8} className="text-white" />
+                            </span>
+                          )}
                         </div>
                         
                         <div className="flex-1 min-w-0">
@@ -546,13 +619,24 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
                             </div>
                           ) : (
                             <div onClick={() => { setEditingId(tx.id); setEditData(tx); }} className="cursor-pointer group">
-                              <p className="font-serif font-bold text-natural-ink truncate group-hover:text-natural-olive transition-colors">{getCategoryLabel(tx.category)}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-serif font-bold text-natural-ink truncate group-hover:text-natural-olive transition-colors">
+                                  {tx.description && tx.category === 'lainnya' ? tx.description : getCategoryLabel(tx.category)}
+                                </p>
+                                {tx.category === 'tabungan' && (
+                                  <span className="text-[8px] bg-blue-500 text-white px-2 py-0.5 rounded-full font-black tracking-tighter uppercase">Savings</span>
+                                )}
+                              </div>
                               <div className="flex items-center gap-2 mt-0.5">
+                                {tx.description && tx.category !== 'lainnya' && (
+                                  <span className="text-[10px] text-natural-mute italic">{tx.description}</span>
+                                )}
                                 <span className={cn(
                                   "text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest",
+                                  tx.category === 'tabungan' ? "bg-blue-100 text-blue-600" :
                                   tx.type === 'income' ? "bg-natural-olive/10 text-natural-olive" : "bg-natural-terracotta/10 text-natural-terracotta"
                                 )}>
-                                  {tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
+                                  {tx.category === 'tabungan' ? 'Tabungan' : tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
                                 </span>
                                 <span className="text-[10px] text-natural-mute font-bold uppercase tracking-tight">{format(parseISO(tx.date), 'dd MMM yyyy')}</span>
                               </div>

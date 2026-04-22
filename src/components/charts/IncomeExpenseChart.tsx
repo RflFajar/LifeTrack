@@ -25,7 +25,8 @@ export const IncomeExpenseChart = ({ transactions }: IncomeExpenseChartProps) =>
       monthKey: format(d, 'yyyy-MM'),
       monthLabel: format(d, 'MMM'),
       income: 0,
-      expense: 0
+      expense: 0,
+      savings: 0
     };
   }).reverse();
 
@@ -35,8 +36,13 @@ export const IncomeExpenseChart = ({ transactions }: IncomeExpenseChartProps) =>
     const monthKey = format(txDate, 'yyyy-MM');
     const monthData = last6Months.find(m => m.monthKey === monthKey);
     if (monthData) {
-      if (tx.type === 'income') monthData.income += tx.amount;
-      else monthData.expense += tx.amount;
+      if (tx.type === 'income') {
+        monthData.income += tx.amount;
+      } else if (tx.category === 'tabungan') {
+        monthData.savings += tx.amount;
+      } else {
+        monthData.expense += tx.amount;
+      }
     }
   });
 
@@ -57,19 +63,24 @@ export const IncomeExpenseChart = ({ transactions }: IncomeExpenseChartProps) =>
             cursor={{ fill: '#F5E6D3', opacity: 0.4 }}
             content={({ active, payload }) => {
               if (active && payload && payload.length) {
+                const data = payload[0].payload;
                 return (
-                  <div className="bg-white p-3 rounded-xl shadow-lg border border-natural-line/50">
+                  <div className="bg-white p-3 rounded-xl shadow-lg border border-natural-line/50 min-w-[150px]">
                     <p className="text-[10px] font-bold text-natural-mute uppercase mb-2">
-                      {payload[0].payload.monthLabel} {payload[0].payload.monthKey.split('-')[0]}
+                      {data.monthLabel} {data.monthKey.split('-')[0]}
                     </p>
                     <div className="space-y-1">
                       <div className="flex items-center justify-between gap-4">
                         <span className="text-[10px] font-bold text-natural-olive uppercase">Masuk</span>
-                        <span className="text-xs font-serif font-bold text-natural-ink italic">{formatCurrency(payload[0].value as number)}</span>
+                        <span className="text-xs font-serif font-bold text-natural-ink italic">{formatCurrency(data.income)}</span>
                       </div>
                       <div className="flex items-center justify-between gap-4">
-                        <span className="text-[10px] font-bold text-natural-terracotta uppercase">Keluar</span>
-                        <span className="text-xs font-serif font-bold text-natural-ink italic">{formatCurrency(payload[1].value as number)}</span>
+                        <span className="text-[10px] font-bold text-natural-terracotta uppercase">Belanja</span>
+                        <span className="text-xs font-serif font-bold text-natural-ink italic">{formatCurrency(data.expense)}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-[10px] font-bold text-blue-500 uppercase">Tabungan</span>
+                        <span className="text-xs font-serif font-bold text-blue-900 italic">{formatCurrency(data.savings)}</span>
                       </div>
                     </div>
                   </div>
@@ -84,8 +95,9 @@ export const IncomeExpenseChart = ({ transactions }: IncomeExpenseChartProps) =>
             iconType="circle"
             wrapperStyle={{ paddingBottom: 20, fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' }}
           />
-          <Bar name="Masuk" dataKey="income" fill="#6B8E23" radius={[4, 4, 0, 0]} barSize={12} />
-          <Bar name="Keluar" dataKey="expense" fill="#CD5C5C" radius={[4, 4, 0, 0]} barSize={12} />
+          <Bar name="Masuk" dataKey="income" fill="#6B8E23" radius={[4, 4, 0, 0]} barSize={8} />
+          <Bar name="Belanja" dataKey="expense" fill="#CD5C5C" radius={[4, 4, 0, 0]} barSize={8} />
+          <Bar name="Tabungan" dataKey="savings" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={8} />
         </BarChart>
       </ResponsiveContainer>
     </div>

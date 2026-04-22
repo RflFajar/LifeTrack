@@ -12,12 +12,13 @@ interface FinancialAdviceResponse {
 }
 
 export async function getFinancialAdvice(transactions: Transaction[], profile: UserProfile): Promise<FinancialAdviceResponse> {
-  const prompt = `Berdasarkan transaksi keuangan dan profil pengguna berikut, berikan 3 tips singkat dan praktis dalam Bahasa Indonesia untuk pengelolaan uang yang lebih baik. Respond in Bahasa Indonesia (Indonesian language).
+  const prompt = `Analisis keuangan untuk pengguna berikut. Bedakan antara "Uang Harian/Belanja" dan "Tabungan" (kategori 'tabungan').
+  Berikan 3 tips singkat, praktis, dan memotivasi dalam Bahasa Indonesia untuk membantu pengguna menabung lebih banyak atau mengelola uang harian lebih efisien.
   
-  Transaksi: ${JSON.stringify(transactions.slice(-10))}
+  Transaksi: ${JSON.stringify(transactions.slice(-20))}
   Profil: ${JSON.stringify(profile)}
   
-  Kembalikan respons dalam format JSON.`;
+  Respond in Bahasa Indonesia (Indonesian language). Kembalikan respons dalam format JSON: {"tips": [string, string, string]}.`;
 
   try {
     const response = await ai.models.generateContent({

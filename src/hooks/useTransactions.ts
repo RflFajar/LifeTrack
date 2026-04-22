@@ -23,7 +23,7 @@ export function useTransactions(
   transactions: Transaction[];
   balance: { income: number; expense: number };
   loading: boolean;
-  addTransaction: (type: 'income' | 'expense', amount: number, category: string, date: string) => Promise<string | null>;
+  addTransaction: (type: 'income' | 'expense', amount: number, category: string, date: string, description?: string) => Promise<string | null>;
   deleteTransaction: (id: string) => Promise<void>;
   updateTransaction: (id: string, data: Partial<Transaction>) => Promise<void>;
 } {
@@ -85,13 +85,14 @@ export function useTransactions(
     return unsubscribe;
   }, [userId, period, customRange?.start, customRange?.end]);
 
-  const addTransaction = async (type: 'income' | 'expense', amount: number, category: string, date: string): Promise<string | null> => {
+  const addTransaction = async (type: 'income' | 'expense', amount: number, category: string, date: string, description?: string): Promise<string | null> => {
     if (!userId || !amount || !category) return null;
     return await safeAddDoc(`users/${userId}/transactions`, {
       type,
       amount,
       category,
       date,
+      description,
       userId,
       createdAt: Timestamp.now()
     }, 'Transaksi berhasil dicatat');
