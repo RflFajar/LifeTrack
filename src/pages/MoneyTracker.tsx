@@ -28,10 +28,10 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { User } from 'firebase/auth';
-import { format, parseISO, startOfMonth } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfYear, endOfYear, subMonths, isWithinInterval } from 'date-fns';
 import { Card } from '../components/ui/Card';
 import { CategorySelect } from '../components/ui/CategorySelect';
-import { useTransactions, PeriodType } from '../hooks/useTransactions';
+import { useTransactions } from '../hooks/useTransactions';
 import { useBudgets } from '../hooks/useBudgets';
 import { formatCurrency } from '../utils/formatters';
 import { getFinancialAdvice } from '../services/gemini';
@@ -74,23 +74,53 @@ interface MoneyTrackerProps {
 
 export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement => {
   const { profile } = useProfile(user.uid);
-  const [period, setPeriod] = useState<PeriodType>('monthly');
+  const [period, setPeriod] = useState<'weekly' | 'monthly' | 'yearly' | 'custom'>('monthly');
   const [customRange, setCustomRange] = useState({ 
     start: format(new Date(), 'yyyy-MM-01'), 
     end: format(new Date(), 'yyyy-MM-dd') 
   });
 
   const { 
-    transactions: txs, 
-    balance, 
+    transactions: allTxs, 
+    balance: lifetimeBalance, 
     addTransaction, 
     deleteTransaction, 
     updateTransaction,
     loading: transactionsLoading
-  } = useTransactions(user.uid, period, period === 'custom' ? customRange : undefined);
+  } = useTransactions(user.uid, 'all');
 
-  // Fetch data specifically for 6-month charts
-  const { transactions: chartTxs } = useTransactions(user.uid, 'six_months');
+  // Filter transactions for the current view period
+  const txs = useMemo(() => {
+    const now = new Date();
+    let start: Date;
+    let end: Date;
+
+    if (period === 'weekly') {
+      start = startOfWeek(now);
+      end = endOfWeek(now);
+    } else if (period === 'monthly') {
+      start = startOfMonth(now);
+      end = endOfMonth(now);
+    } else if (period === 'yearly') {
+      start = startOfYear(now);
+      end = endOfYear(now);
+    } else {
+      start = parseISO(customRange.start);
+      end = parseISO(customRange.end);
+    }
+
+    return allTxs.filter(tx => {
+      const txDate = parseISO(tx.date);
+      return txDate >= start && txDate <= end;
+    });
+  }, [allTxs, period, customRange]);
+
+  // Data specifically for 6-month charts
+  const chartTxs = useMemo(() => {
+    const now = new Date();
+    const start = subMonths(startOfMonth(now), 5);
+    return allTxs.filter(tx => parseISO(tx.date) >= start);
+  }, [allTxs]);
 
   // Budget management
   const currentMonthKey = format(new Date(), 'yyyy-MM');
@@ -187,7 +217,8 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
     let pureExpenses = 0;
     let pureIncomes = 0;
     
-    txs.forEach(tx => {
+    // Calculate lifetime savings and balance
+    allTxs.forEach(tx => {
       if (tx.category === 'tabungan') {
         if (tx.type === 'expense') {
           savingsBalance += tx.amount; // Menabung
@@ -206,15 +237,18 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
     return {
       totalSavings: savingsBalance,
       totalPureExpenses: pureExpenses,
-      dailyMoney: pureIncomes - pureExpenses - (savingsBalance > 0 ? 0 : 0) // Logical balance
+      dailyMoney: pureIncomes - pureExpenses
     };
-  }, [txs]);
+  }, [allTxs]);
 
-  // We actually need a more accurate dailyMoney calculation
-  // dailyMoney = All Incomes (non-savings) - All Expenses (non-savings) - Current Savings Balance
-  // Wait, if I take from savings (Income: Tabungan), it reduces savingsBalance.
-  // So Sisa Uang Harian is basically (Total Income - Total Expense).
-  const finalDailyMoney = useMemo(() => balance.income - balance.expense, [balance]);
+  // For the "Sisa Uang Harian" card, we show the actual balance (all income - all expense)
+  const finalDailyMoney = useMemo(() => lifetimeBalance.income - lifetimeBalance.expense, [lifetimeBalance]);
+
+  // For the "Total Belanja" card, maybe it's better to show the expenditure of the SELECTED PERIOD?
+  // Let's keep it as expenditures of the current period to maintain context.
+  const currentPeriodSpending = useMemo(() => {
+    return txs.reduce((acc, tx) => (tx.type === 'expense' && tx.category !== 'tabungan') ? acc + tx.amount : acc, 0);
+  }, [txs]);
 
   if (transactionsLoading) {
     return (
@@ -337,8 +371,8 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
             <TrendingDown className="text-natural-terracotta" />
           </div>
           <div>
-            <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest">Total Belanja</p>
-            <p className="text-2xl font-serif font-bold text-natural-ink dark:text-dark-text italic">{formatCurrency(totalPureExpenses)}</p>
+            <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest">Belanja {period === 'weekly' ? 'Mingguan' : period === 'monthly' ? 'Bulanan' : period === 'yearly' ? 'Tahunan' : 'Custom'}</p>
+            <p className="text-2xl font-serif font-bold text-natural-ink dark:text-dark-text italic">{formatCurrency(currentPeriodSpending)}</p>
           </div>
         </Card>
 

@@ -13,7 +13,7 @@ import {
 import { watchCollection, safeAddDoc, safeDeleteDoc, safeUpdateDoc } from '../services/firestore';
 import { Transaction } from '../types';
 
-export type PeriodType = 'weekly' | 'monthly' | 'yearly' | 'six_months' | 'custom';
+export type PeriodType = 'weekly' | 'monthly' | 'yearly' | 'six_months' | 'all' | 'custom';
 
 export function useTransactions(
   userId: string | undefined, 
@@ -42,14 +42,17 @@ export function useTransactions(
       start = format(startOfWeek(now), 'yyyy-MM-dd');
       end = format(endOfWeek(now), 'yyyy-MM-dd');
     } else if (period === 'monthly') {
-      start = format(startOfMonth(now), 'yyyy-MM-dd');
+      start = format(startOfMonth(now), 'yyyy-MM-01');
       end = format(endOfMonth(now), 'yyyy-MM-dd');
     } else if (period === 'yearly') {
-      start = format(startOfYear(now), 'yyyy-MM-dd');
-      end = format(endOfYear(now), 'yyyy-MM-dd');
+      start = format(startOfYear(now), 'yyyy-01-01');
+      end = format(endOfYear(now), 'yyyy-12-31');
     } else if (period === 'six_months') {
       start = format(subMonths(now, 5), 'yyyy-MM-01');
       end = format(now, 'yyyy-MM-dd');
+    } else if (period === 'all') {
+      start = '';
+      end = '';
     } else if (period === 'custom' && customRange) {
       start = customRange.start;
       end = customRange.end;

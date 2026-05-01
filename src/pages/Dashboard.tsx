@@ -24,7 +24,7 @@ interface DashboardProps {
 export const Dashboard = ({ user }: DashboardProps): React.ReactElement => {
   const navigate = useNavigate();
   const { items: scheduleItems, loading: scheduleLoading } = useSchedule(user.uid);
-  const { balance, loading: transactionsLoading } = useTransactions(user.uid);
+  const { balance: lifetimeBalance, loading: transactionsLoading } = useTransactions(user.uid, 'all');
   
   const todayItems = scheduleItems.filter(i => i.date === format(new Date(), 'yyyy-MM-dd'));
   const isLoading = scheduleLoading || transactionsLoading;
@@ -42,8 +42,8 @@ export const Dashboard = ({ user }: DashboardProps): React.ReactElement => {
               {isLoading ? <Skeleton className="h-8 w-20 bg-white/20" /> : <p className="text-2xl font-bold">{todayItems.length} Agenda</p>}
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-              <p className="text-[10px] uppercase font-bold opacity-70 mb-1 tracking-wider">Sisa Anggaran</p>
-              {isLoading ? <Skeleton className="h-8 w-32 bg-white/20" /> : <p className="text-2xl font-bold">{formatCurrency(balance.income - balance.expense)}</p>}
+              <p className="text-[10px] uppercase font-bold opacity-70 mb-1 tracking-wider">Total Saldo</p>
+              {isLoading ? <Skeleton className="h-8 w-32 bg-white/20" /> : <p className="text-2xl font-bold">{formatCurrency(lifetimeBalance.income - lifetimeBalance.expense)}</p>}
             </div>
           </div>
         </div>
