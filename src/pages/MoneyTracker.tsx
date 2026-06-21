@@ -767,7 +767,7 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
                             >Batal</button>
                           </div>
                         ) : (
-                          <div className="flex gap-1 sm:gap-2 opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 transition-opacity shrink-0">
+                          <div className="hidden group-hover:flex gap-1 sm:gap-2 shrink-0 animate-in fade-in slide-in-from-right-2 duration-200">
                             <button 
                               onClick={() => { setEditingId(tx.id); setEditData(tx); }}
                               className="p-1.5 sm:p-2 bg-natural-bg text-natural-mute hover:text-natural-olive rounded-full transition-colors"
