@@ -139,8 +139,8 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
   };
 
   return (
-    <Card className="bg-natural-bg/40 border-0 dark:bg-dark-card/30 p-0">
-      <div className="flex items-center justify-between mb-4">
+    <Card className="bg-natural-bg/50 border border-natural-line/80 dark:bg-dark-card/20 dark:border-white/5 rounded-[32px] p-4 sm:p-6 relative">
+      <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-serif italic text-natural-ink dark:text-dark-text font-bold flex items-center gap-2">
           <Target size={20} className="text-natural-terracotta" /> Goal Tabungan
         </h3>
@@ -283,7 +283,7 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                 layout
                 key={goal.id} 
                 id={`goal-${goal.id}`}
-                className="bg-white dark:bg-dark-card border border-natural-line/45 dark:border-white/5 rounded-3xl p-6 relative overflow-hidden group shadow-sm hover:shadow-md transition-all duration-300"
+                className="bg-white dark:bg-dark-card border border-natural-line/45 dark:border-white/5 rounded-3xl p-4 sm:p-6 relative overflow-hidden group shadow-sm hover:shadow-md transition-all duration-300"
               >
                 {isCompleted && (
                   <div className="absolute top-0 right-0 bg-natural-olive text-white px-3 py-1 rounded-bl-2xl flex items-center gap-1 text-[9px] font-black uppercase tracking-widest shadow-sm">
@@ -343,11 +343,11 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
 
                 <div className="space-y-3">
                   {/* Amount detail matching Terkumpul Rp 12.000.000 on left, / 15.000.000 on far right */}
-                  <div className="flex justify-between items-baseline text-sm font-numeric text-natural-mute">
-                    <span>
+                  <div className="flex flex-wrap gap-x-2 gap-y-1 justify-between items-baseline text-xs sm:text-sm font-numeric text-natural-mute">
+                    <span className="truncate max-w-[160px] sm:max-w-none">
                       Terkumpul <strong className="text-natural-ink dark:text-white font-medium font-serif">{formatCurrency(goal.currentAmount)}</strong>
                     </span>
-                    <span className="text-xs text-natural-mute/70">
+                    <span className="text-[10px] sm:text-xs text-natural-mute/70">
                       / {goal.targetAmount.toLocaleString('id-ID')}
                     </span>
                   </div>
@@ -355,26 +355,26 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                   {/* Progress Line */}
                   <div className="h-2 w-full bg-[#E8E2D6]/40 dark:bg-dark-bg-deep rounded-full overflow-hidden">
                     <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${percent}%` }}
-                      className="h-full transition-all duration-1000 bg-natural-olive"
+                       initial={{ width: 0 }}
+                       animate={{ width: `${percent}%` }}
+                       className="h-full transition-all duration-1000 bg-natural-olive"
                     />
                   </div>
 
                   {/* Divider line style */}
-                  <div className="border-t border-natural-line/30 pt-3 flex justify-between items-center text-xs">
-                    <span className="text-natural-olive dark:text-emerald-400 font-semibold tracking-wide">
-                      {percent.toFixed(0)}% tercapai 
+                  <div className="border-t border-natural-line/30 pt-3 flex flex-wrap gap-x-2 gap-y-2.5 justify-between items-center text-[11px] sm:text-xs">
+                    <span className="text-natural-olive dark:text-emerald-400 font-semibold tracking-wide flex flex-wrap items-center gap-0.5">
+                      <span>{percent.toFixed(0)}% tercapai</span>
                       {!isCompleted && (
                         <>
-                          <span className="text-natural-mute/40 mx-1.5">&#183;</span>
+                          <span className="text-natural-mute/40 mx-1">&#183;</span>
                           <span className="text-natural-mute font-normal">sisa {compactRemaining}</span>
                         </>
                       )}
                     </span>
 
                     {!isCompleted && (
-                      <div className="flex justify-end">
+                      <div className="flex justify-end shrink-0">
                         {depositGoalId === goal.id ? (
                           <div className="flex gap-1 items-center animate-in slide-in-from-right-3 duration-250">
                             <input 
@@ -406,7 +406,7 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                             }}
                             className="font-semibold text-natural-olive hover:text-natural-terracotta transition-colors flex items-center gap-1 text-sm group/btn"
                           >
-                            <span className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform">↗</span> Tabung
+                            <span className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform font-serif">↗</span> Tabung
                           </button>
                         )}
                       </div>
