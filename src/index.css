@@ -1,38 +1,39 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Cormorant Garamond", serif;
+  --font-serif: "Fraunces", serif;
+  --font-display: "Fraunces", serif;
   --font-mono: "JetBrains Mono", monospace;
   
   --color-natural-bg: var(--bg-main);
   --color-natural-ink: var(--text-main);
-  --color-natural-olive: #6B705C;
-  --color-natural-terracotta: #CB997E;
-  --color-natural-mute: #A5A58D;
+  --color-natural-olive: #2D5A4A;
+  --color-natural-terracotta: #C26B47;
+  --color-natural-mute: #6B645B;
   --color-natural-peach: #FFE8D6;
   --color-natural-line: var(--border-main);
 
-  /* Dark palette */
-  --color-dark-bg-deep: #1a1a2e;
-  --color-dark-bg-main: #16213e;
-  --color-dark-card: #1e293b;
-  --color-dark-text: #e2e8f0;
+  /* Dark palette matching Warm Fintech */
+  --color-dark-bg-deep: #161311;
+  --color-dark-bg-main: #1F1B16;
+  --color-dark-card: #25211B;
+  --color-dark-text: #F5F1EA;
 }
 
 :root {
-  --bg-main: #F9F7F2;
-  --text-main: #434338;
-  --border-main: #E5E2D9;
+  --bg-main: #FAF8F4;
+  --text-main: #1F1B16;
+  --border-main: #E8E2D6;
 }
 
 .dark {
-  --bg-main: #16213e;
-  --text-main: #e2e8f0;
-  --border-main: rgba(255, 255, 255, 0.05);
+  --bg-main: #161311;
+  --text-main: #F5F1EA;
+  --border-main: #2A2520;
 }
 
 @layer base {
@@ -59,7 +60,12 @@
 }
 
 .font-serif {
-  font-family: "Cormorant Garamond", serif;
+  font-family: "Fraunces", serif;
+}
+
+.font-numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
 .glass-card {

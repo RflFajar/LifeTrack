@@ -389,34 +389,34 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="flex items-center gap-6 border-l-4 border-l-natural-olive relative overflow-hidden bg-natural-olive/5">
-          <div className="w-14 h-14 bg-white dark:bg-dark-card rounded-2xl shadow-sm flex items-center justify-center shrink-0">
+        <Card className="flex items-center gap-6 border-l-4 border-l-natural-olive relative overflow-hidden bg-natural-olive/5 rounded-xl">
+          <div className="w-14 h-14 bg-white dark:bg-dark-card rounded-lg shadow-sm flex items-center justify-center shrink-0">
             <Wallet className="text-natural-olive" />
           </div>
           <div>
             <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest">Sisa Uang Harian</p>
-            <p className="text-2xl font-serif font-bold text-natural-ink dark:text-dark-text italic">{formatCurrency(finalDailyMoney)}</p>
+            <p className="text-2xl font-display font-semibold text-natural-ink dark:text-dark-text font-numeric">{formatCurrency(finalDailyMoney)}</p>
           </div>
           <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-natural-olive/10 rounded-full" />
         </Card>
 
-        <Card className="flex items-center gap-6 border-l-4 border-l-natural-terracotta relative overflow-hidden">
-          <div className="w-14 h-14 bg-natural-peach/30 rounded-2xl flex items-center justify-center shrink-0">
+        <Card className="flex items-center gap-6 border-l-4 border-l-natural-terracotta relative overflow-hidden rounded-xl">
+          <div className="w-14 h-14 bg-natural-peach/30 dark:bg-natural-peach/10 rounded-lg flex items-center justify-center shrink-0">
             <TrendingDown className="text-natural-terracotta" />
           </div>
           <div>
             <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest">Belanja {period === 'weekly' ? 'Mingguan' : period === 'monthly' ? 'Bulanan' : period === 'yearly' ? 'Tahunan' : 'Custom'}</p>
-            <p className="text-2xl font-serif font-bold text-natural-ink dark:text-dark-text italic">{formatCurrency(currentPeriodSpending)}</p>
+            <p className="text-2xl font-display font-semibold text-natural-ink dark:text-dark-text font-numeric">{formatCurrency(currentPeriodSpending)}</p>
           </div>
         </Card>
 
-        <Card className="flex items-center gap-6 border-l-4 border-l-blue-500 relative overflow-hidden bg-blue-50">
-          <div className="w-14 h-14 bg-white dark:bg-dark-card rounded-2xl shadow-sm flex items-center justify-center shrink-0">
+        <Card className="flex items-center gap-6 border-l-4 border-l-blue-500 relative overflow-hidden bg-blue-50/50 dark:bg-blue-950/20 rounded-xl">
+          <div className="w-14 h-14 bg-white dark:bg-dark-card rounded-lg shadow-sm flex items-center justify-center shrink-0">
             <Target className="text-blue-500" />
           </div>
           <div>
-            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest">Dana Tabungan</p>
-            <p className="text-2xl font-serif font-bold text-blue-900 italic">{formatCurrency(totalSavings)}</p>
+            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest">Dana Tabungan</p>
+            <p className="text-2xl font-display font-semibold text-blue-900 dark:text-blue-300 font-numeric">{formatCurrency(totalSavings)}</p>
           </div>
           <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-blue-500/10 rounded-full" />
         </Card>
@@ -750,7 +750,7 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
 
                       <div className="flex items-center gap-6">
                         <div className="text-right">
-                          <p className={cn("font-serif font-bold text-lg italic", tx.type === 'income' ? "text-natural-olive" : "text-natural-terracotta")}>
+                          <p className={cn("font-display font-semibold text-md font-numeric", tx.type === 'income' ? "text-natural-olive" : "text-natural-terracotta")}>
                             {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
                           </p>
                         </div>

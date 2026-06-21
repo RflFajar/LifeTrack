@@ -43,3 +43,25 @@ export const calculateBMR = (gender: 'male' | 'female', weight: number, height: 
     return (10 * weight) + (6.25 * height) - (5 * age) - 161;
   }
 };
+
+/**
+ * Formats a number compactly in Indonesian format, e.g., Rp 5.2 jt
+ */
+export const formatCurrencyCompact = (amount: number): string => {
+  const absAmount = Math.abs(amount);
+  const sign = amount < 0 ? '-' : '';
+  
+  if (absAmount >= 1_000_000_000) {
+    const value = (absAmount / 1_000_000_000).toFixed(1).replace('.0', '');
+    return `${sign}Rp ${value.replace('.', ',')} M`;
+  }
+  if (absAmount >= 1_000_000) {
+    const value = (absAmount / 1_000_000).toFixed(1).replace('.0', '');
+    return `${sign}Rp ${value.replace('.', ',')} jt`;
+  }
+  if (absAmount >= 1_000) {
+    const value = (absAmount / 1_000).toFixed(1).replace('.0', '');
+    return `${sign}Rp ${value.replace('.', ',')} rb`;
+  }
+  return `${sign}Rp ${absAmount.toLocaleString()}`;
+};

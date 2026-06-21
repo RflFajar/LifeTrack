@@ -9,8 +9,6 @@ import {
   Smile, 
   Save, 
   Check, 
-  Ruler, 
-  Scale, 
   Camera,
   Coins,
   ShieldCheck,
@@ -23,7 +21,7 @@ import { useSavingGoals } from '../hooks/useSavingGoals';
 import { showToast } from '../context/ToastContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { formatCurrency, calculateBMI, getBMICategory } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 
 interface ProfileProps {
   user: FirebaseUser;
@@ -42,7 +40,7 @@ const PRESET_AVATARS = [
 ];
 
 export const Profile = ({ user, onClose }: ProfileProps): React.ReactElement => {
-  const { profile, loading: profileLoading, saveProfile, bmi } = useProfile(user.uid);
+  const { profile, loading: profileLoading, saveProfile } = useProfile(user.uid);
   const { goals } = useSavingGoals(user.uid);
   const [formData, setFormData] = useState({
     name: user.displayName || '',
@@ -132,17 +130,15 @@ export const Profile = ({ user, onClose }: ProfileProps): React.ReactElement => 
   if (profileLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-44 bg-white rounded-3xl animate-pulse" />
+        <div className="h-44 bg-white dark:bg-dark-card rounded-3xl animate-pulse" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="h-96 bg-white rounded-3xl animate-pulse" />
-          <div className="h-96 bg-white rounded-3xl animate-pulse" />
+          <div className="h-96 bg-white dark:bg-dark-card rounded-3xl animate-pulse" />
         </div>
       </div>
     );
   }
 
   const completedGoalsCount = goals.filter(g => g.currentAmount >= g.targetAmount).length;
-  const bmiCategory = getBMICategory(bmi);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12 relative text-natural-ink">
@@ -400,84 +396,33 @@ export const Profile = ({ user, onClose }: ProfileProps): React.ReactElement => 
           </Card>
         </div>
 
-        {/* Right Column: Physical & General Constraints */}
+        {/* Right Column: Financial Constraints */}
         <div className="space-y-6">
-          {/* Card Physical Measurements */}
-          <Card className="p-6 md:p-8 space-y-6">
-            <div className="border-b border-natural-line/40 pb-4">
-              <h3 className="text-md font-serif font-bold text-natural-olive italic flex items-center gap-2">
-                <Ruler size={18} className="text-natural-terracotta" /> Kebugaran & Tubuh
-              </h3>
-              <p className="text-[9px] text-natural-mute font-medium mt-0.5">Informasi penunjang data kesehatan harian Anda.</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] font-bold text-natural-mute uppercase tracking-widest flex items-center gap-1.5 mb-1">
-                  <Ruler size={12} className="text-natural-olive" /> Tinggi (cm)
-                </label>
-                <input 
-                  type="number" 
-                  value={formData.height}
-                  onChange={e => setFormData({ ...formData, height: Number(e.target.value) })}
-                  className="w-full p-3.5 bg-natural-bg dark:bg-dark-bg-deep border border-natural-line/60 rounded-xl outline-none focus:ring-1 focus:ring-natural-olive font-serif text-sm font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-natural-mute uppercase tracking-widest flex items-center gap-1.5 mb-1">
-                  <Scale size={12} className="text-natural-olive" /> Berat (kg)
-                </label>
-                <input 
-                  type="number" 
-                  value={formData.weight}
-                  onChange={e => setFormData({ ...formData, weight: Number(e.target.value) })}
-                  className="w-full p-3.5 bg-natural-bg dark:bg-dark-bg-deep border border-natural-line/60 rounded-xl outline-none focus:ring-1 focus:ring-natural-olive font-serif text-sm font-bold"
-                />
-              </div>
-            </div>
-
-            {/* Health indicators */}
-            <div className="p-4 bg-natural-olive/5 rounded-2xl space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-natural-mute font-medium">Skor BMI Anda:</span>
-                <span className="font-serif italic font-bold text-natural-ink">{bmi}</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-natural-mute font-medium">Kategori Tubuh:</span>
-                <span className="font-serif italic font-black text-natural-terracotta">{bmiCategory}</span>
-              </div>
-              <p className="text-[9px] italic text-natural-mute">
-                Angka BMI diperoleh dari metrik tinggi {formData.height}cm dan berat {formData.weight}kg Anda saat ini.
-              </p>
-            </div>
-          </Card>
-
           {/* Card Financial Constraints (Monthly Budget Limit) */}
-          <Card className="p-6 md:p-8 space-y-6">
-            <div className="border-b border-natural-line/40 pb-4">
-              <h3 className="text-md font-serif font-bold text-natural-olive italic flex items-center gap-2">
-                <Coins size={18} className="text-natural-terracotta" /> Sasaran Anggaran
+          <Card className="p-6 md:p-8 space-y-6 bg-paper border border-line dark:border-line-strong rounded-xl shadow-sm">
+            <div className="border-b border-line dark:border-line-strong pb-4">
+              <h3 className="text-md font-display font-semibold text-accent flex items-center gap-2">
+                <Coins size={18} /> Sasaran Anggaran
               </h3>
-              <p className="text-[9px] text-natural-mute font-medium mt-0.5">Batas perencanaan belanja yang digunakan oleh LifeTrack.</p>
+              <p className="text-[11px] text-mute font-medium mt-0.5">Batas perencanaan belanja harian & bulanan Anda.</p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-bold text-natural-mute uppercase tracking-widest flex items-center gap-1.5 mb-1.5">
+                <label className="text-[10px] font-bold text-mute uppercase tracking-widest block mb-1.5">
                   Batas Anggaran Bulanan (Rp)
                 </label>
                 <input 
                   type="number" 
                   value={formData.budget}
                   onChange={e => setFormData({ ...formData, budget: Number(e.target.value) })}
-                  className="w-full p-3.5 bg-natural-bg dark:bg-dark-bg-deep border border-natural-line/60 rounded-xl outline-none focus:ring-1 focus:ring-natural-olive font-serif text-sm font-bold text-natural-ink"
+                  className="w-full p-3.5 bg-bg dark:bg-bg border border-line rounded-md outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent font-display font-semibold text-xs text-ink"
                 />
               </div>
 
-              <div className="p-4 bg-natural-peach/10 rounded-2xl">
-                <p className="text-[10px] font-bold text-natural-terracotta uppercase tracking-[0.1em] mb-1">Rekomendasi Tabungan Harian</p>
-                <p className="text-xs text-natural-mute font-medium">
+              <div className="p-4 bg-natural-peach/10 dark:bg-natural-peach/5 rounded-md">
+                <p className="text-[10px] font-bold text-accent-2 uppercase tracking-[0.1em] mb-1">Rekomendasi Tabungan Harian</p>
+                <p className="text-xs text-mute font-medium leading-relaxed">
                   Dengan pagu anggaran bulanan sebesar <strong>{formatCurrency(formData.budget)}</strong>, batasi pengeluaran non-primer harian Anda di bawah <strong>{formatCurrency(formData.budget / 30)}</strong> demi tercapainya tujuan tabungan harian yang sehat.
                 </p>
               </div>

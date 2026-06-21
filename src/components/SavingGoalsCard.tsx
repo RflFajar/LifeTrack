@@ -271,12 +271,19 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
             const remaining = goal.targetAmount - goal.currentAmount;
             const isCompleted = goal.currentAmount >= goal.targetAmount;
 
+            let compactRemaining = formatCurrency(remaining);
+            if (remaining >= 1_000_000) {
+              compactRemaining = `Rp ${((remaining) / 1_000_000).toFixed(1).replace('.0', '')} jt`;
+            } else if (remaining >= 1_000) {
+              compactRemaining = `Rp ${((remaining) / 1_000).toFixed(1).replace('.0', '')} rb`;
+            }
+
             return (
               <motion.div 
                 layout
                 key={goal.id} 
                 id={`goal-${goal.id}`}
-                className="bg-white dark:bg-dark-card border border-natural-line/50 dark:border-white/5 rounded-3xl p-5 relative overflow-hidden group shadow-sm hover:shadow"
+                className="bg-white dark:bg-dark-card border border-natural-line/45 dark:border-white/5 rounded-3xl p-6 relative overflow-hidden group shadow-sm hover:shadow-md transition-all duration-300"
               >
                 {isCompleted && (
                   <div className="absolute top-0 right-0 bg-natural-olive text-white px-3 py-1 rounded-bl-2xl flex items-center gap-1 text-[9px] font-black uppercase tracking-widest shadow-sm">
@@ -284,137 +291,128 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                   </div>
                 )}
 
-                <div className="flex justify-between items-start pr-12">
-                  <div>
-                    <span className="text-[8px] bg-natural-peach dark:bg-natural-olive/20 text-natural-olive font-black tracking-widest uppercase px-2 py-0.5 rounded-full">
-                      {goal.category || 'Impian'}
-                    </span>
-                    <h4 className="font-serif font-bold text-natural-ink dark:text-dark-text mt-1 text-sm">
-                      {goal.title}
-                    </h4>
-                  </div>
-                  
-                  {/* Actions Pop */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {confirmDeleteId === goal.id ? (
-                      <div className="flex items-center gap-1 animate-in zoom-in-95 duration-200">
-                        <button 
-                          onClick={async () => {
-                            await deleteGoal(goal.id);
-                            setConfirmDeleteId(null);
-                          }}
-                          className="bg-red-500 hover:bg-red-600 text-white text-[9px] font-bold px-2.5 py-1 rounded-xl transition-colors shadow-sm"
-                          title="Konfirmasi Hapus"
-                        >
-                          Hapus
-                        </button>
-                        <button 
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="bg-natural-bg/80 text-natural-mute text-[9px] font-bold px-2.5 py-1 rounded-xl hover:bg-natural-line transition-colors"
-                          title="Batal"
-                        >
-                          Batal
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <button 
-                          onClick={() => handleStartEdit(goal)}
-                          className="p-1.5 text-natural-mute hover:text-natural-olive rounded-lg hover:bg-natural-bg transition-all"
-                          title="Edit"
-                        >
-                          <Edit2 size={13} />
-                        </button>
-                        <button 
-                          onClick={() => setConfirmDeleteId(goal.id)}
-                          className="p-1.5 text-natural-mute hover:text-red-500 rounded-lg hover:bg-natural-bg transition-all"
-                          title="Hapus"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </>
-                    )}
-                  </div>
+                {/* Edit & Delete actions on hover/focus */}
+                <div className="absolute top-4 right-4 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  {confirmDeleteId === goal.id ? (
+                    <div className="flex items-center gap-1 animate-in zoom-in-95 duration-200 bg-white/90 dark:bg-dark-card/90 p-1 rounded-lg shadow-sm">
+                      <button 
+                        onClick={async () => {
+                          await deleteGoal(goal.id);
+                          setConfirmDeleteId(null);
+                        }}
+                        className="bg-red-500 hover:bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded-md transition-colors"
+                      >
+                        Hapus
+                      </button>
+                      <button 
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] font-bold px-2 py-1 rounded-md"
+                      >
+                        Batal
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-white/80 dark:bg-dark-card/80 backdrop-blur-sm p-1 rounded-lg border border-natural-line/40 flex gap-0.5">
+                      <button 
+                        onClick={() => handleStartEdit(goal)}
+                        className="p-1 text-natural-mute hover:text-natural-olive rounded-md"
+                        title="Edit"
+                      >
+                        <Edit2 size={13} />
+                      </button>
+                      <button 
+                        onClick={() => setConfirmDeleteId(goal.id)}
+                        className="p-1 text-natural-mute hover:text-red-500 rounded-md"
+                        title="Hapus"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                <div className="mt-4 space-y-2">
-                  <div className="flex justify-between items-end text-xs">
-                    <span className="font-medium text-natural-mute font-serif italic">
-                      Terumpul: <strong>{formatCurrency(goal.currentAmount)}</strong>
+                <div className="mb-2.5">
+                  <span className="inline-block text-[11px] bg-natural-peach/30 dark:bg-natural-peach/5 text-natural-terracotta dark:text-natural-terracotta px-3 py-0.5 rounded-full font-medium">
+                    {goal.category || 'Impian'}
+                  </span>
+                </div>
+
+                <h4 className="font-serif font-semibold text-natural-ink dark:text-dark-text text-xl mb-3.5 tracking-tight">
+                  {goal.title}
+                </h4>
+
+                <div className="space-y-3">
+                  {/* Amount detail matching Terkumpul Rp 12.000.000 on left, / 15.000.000 on far right */}
+                  <div className="flex justify-between items-baseline text-sm font-numeric text-natural-mute">
+                    <span>
+                      Terkumpul <strong className="text-natural-ink dark:text-white font-medium font-serif">{formatCurrency(goal.currentAmount)}</strong>
                     </span>
-                    <span className="font-mono text-[10px] text-natural-mute">
-                      Target: {formatCurrency(goal.targetAmount)}
+                    <span className="text-xs text-natural-mute/70">
+                      / {goal.targetAmount.toLocaleString('id-ID')}
                     </span>
                   </div>
 
                   {/* Progress Line */}
-                  <div className="h-2 w-full bg-natural-bg dark:bg-dark-bg-deep rounded-full overflow-hidden border border-natural-line/40">
+                  <div className="h-2 w-full bg-[#E8E2D6]/40 dark:bg-dark-bg-deep rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${percent}%` }}
-                      className={`h-full transition-all duration-1000 ${isCompleted ? 'bg-natural-olive' : 'bg-natural-terracotta'}`}
+                      className="h-full transition-all duration-1000 bg-natural-olive"
                     />
                   </div>
 
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className={isCompleted ? 'text-natural-olive font-extrabold' : 'text-natural-terracotta font-bold'}>
-                      {isCompleted ? (
-                        'Selamat, target impian Anda sudah terpenuhi!'
-                      ) : (
-                        `Sisa ${formatCurrency(remaining)} lagi untuk mencapai target.`
+                  {/* Divider line style */}
+                  <div className="border-t border-natural-line/30 pt-3 flex justify-between items-center text-xs">
+                    <span className="text-natural-olive dark:text-emerald-400 font-semibold tracking-wide">
+                      {percent.toFixed(0)}% tercapai 
+                      {!isCompleted && (
+                        <>
+                          <span className="text-natural-mute/40 mx-1.5">&#183;</span>
+                          <span className="text-natural-mute font-normal">sisa {compactRemaining}</span>
+                        </>
                       )}
                     </span>
-                    {goal.deadline ? (
-                      <span className="text-natural-mute flex items-center gap-1 italic">
-                        <Calendar size={10} /> {new Date(goal.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
 
-                {/* Quick Add Funds Toggle */}
-                {!isCompleted && (
-                  <div className="mt-4 pt-3 border-t border-natural-line/30 flex justify-between items-center">
-                    {depositGoalId === goal.id ? (
-                      <div className="flex gap-1.5 w-full">
-                        <input 
-                          type="number" 
-                          value={depositValue}
-                          onChange={e => setDepositValue(e.target.value)}
-                          placeholder="Jumlah dana (Rp)" 
-                          className="flex-1 p-2 bg-natural-bg dark:bg-dark-bg-deep border border-natural-line/60 rounded-xl outline-none text-xs font-serif font-bold"
-                        />
-                        <button 
-                          onClick={() => handleQuickAddFunds(goal)}
-                          className="bg-natural-olive hover:bg-natural-olive/90 text-white text-xs px-3 py-1.5 rounded-xl font-bold font-serif"
-                        >
-                          Simpan
-                        </button>
-                        <button 
-                          onClick={() => setDepositGoalId(null)}
-                          className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs px-2.5 rounded-xl"
-                        >
-                          Batal
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex justify-between w-full items-center">
-                        <span className="text-[10px] text-natural-mute font-mono italic">
-                          ({percent.toFixed(0)}% Tercapai)
-                        </span>
-                        <button 
-                          onClick={() => {
-                            setDepositGoalId(goal.id);
-                            setDepositValue('');
-                          }}
-                          className="text-[9px] uppercase tracking-wider font-extrabold text-natural-olive hover:text-natural-terracotta transition-colors flex items-center gap-1"
-                        >
-                          <TrendingUp size={10} /> Tabung Sekarang
-                        </button>
+                    {!isCompleted && (
+                      <div className="flex justify-end">
+                        {depositGoalId === goal.id ? (
+                          <div className="flex gap-1 items-center animate-in slide-in-from-right-3 duration-250">
+                            <input 
+                              type="number" 
+                              value={depositValue}
+                              onChange={e => setDepositValue(e.target.value)}
+                              placeholder="Fulus (Rp)" 
+                              className="w-24 p-1 bg-natural-bg dark:bg-dark-bg-deep border border-natural-line/60 rounded-md outline-none text-xs font-semibold text-center font-numeric text-natural-ink dark:text-white"
+                              autoFocus
+                            />
+                            <button 
+                              onClick={() => handleQuickAddFunds(goal)}
+                              className="bg-natural-olive hover:bg-natural-olive/95 text-white text-[11px] px-2 py-1 rounded-md font-semibold"
+                            >
+                              Sip
+                            </button>
+                            <button 
+                              onClick={() => setDepositGoalId(null)}
+                              className="bg-natural-line text-natural-mute text-[11px] px-1.5 py-1 rounded-md mb-0"
+                            >
+                              x
+                            </button>
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => {
+                              setDepositGoalId(goal.id);
+                              setDepositValue('');
+                            }}
+                            className="font-semibold text-natural-olive hover:text-natural-terracotta transition-colors flex items-center gap-1 text-sm group/btn"
+                          >
+                            <span className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform">↗</span> Tabung
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
+                </div>
               </motion.div>
             );
           })}

@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { Card } from '../components/ui/Card';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useTransactions } from '../hooks/useTransactions';
+import { useProfile } from '../hooks/useProfile';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,6 +27,9 @@ interface DashboardProps {
 export const Dashboard = ({ user }: DashboardProps): React.ReactElement => {
   const navigate = useNavigate();
   const { transactions: allTxs, balance: lifetimeBalance, loading: transactionsLoading } = useTransactions(user.uid, 'all');
+  const { profile } = useProfile(user.uid);
+
+  const displayName = profile?.name || user.displayName || 'Pengguna';
 
   // Calculate finance metrics
   const { totalSavings, totalPureExpenses, dailyMoney } = useMemo(() => {
@@ -107,69 +111,74 @@ export const Dashboard = ({ user }: DashboardProps): React.ReactElement => {
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-500">
       {/* Top Banner Card */}
-      <Card className="bg-natural-olive text-white p-8 overflow-hidden relative border-0 shadow-lg shadow-natural-olive/20 rounded-[40px]">
-        <Sparkles className="absolute top-4 right-4 w-12 h-12 opacity-20" />
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-          <div>
-            <h2 className="text-sm font-serif italic opacity-90 mb-1">Status Keuangan</h2>
-            <p className="text-3xl font-serif font-bold tracking-tight mb-2">{formatDate(new Date())}</p>
-            <p className="text-xs text-white/75 bg-white/10 px-3 py-1.5 rounded-xl inline-block backdrop-blur-sm border border-white/5 italic">
-              Aplikasi telah disesuaikan khusus untuk memantau keuangan harian Anda secara maksimal.
-            </p>
+      <Card className="bg-natural-olive text-white p-6 md:p-8 overflow-hidden relative border-0 shadow-sm rounded-3xl flex flex-col justify-between min-h-[220px]">
+        {/* Subtle orange warm fintech radial light glow in the bottom-right corner */}
+        <div className="absolute right-[-40px] bottom-[-40px] w-80 h-80 rounded-full bg-gradient-to-br from-[#C26B47]/20 via-[#FFE8D6]/10 to-transparent blur-3xl pointer-events-none" />
+        
+        <div className="relative z-10 flex flex-col gap-6">
+          <div className="text-sm md:text-base text-white/95 font-medium flex items-center gap-1.5">
+            Halo, {displayName}
           </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-[28px] p-6 border border-white/10 text-center md:text-left">
-            <p className="text-[10px] uppercase font-bold opacity-75 mb-1.5 tracking-widest flex items-center justify-center md:justify-start gap-1.5">
-              <Wallet size={12} /> Sisa Uang Harian (Kas)
+          
+          <div className="space-y-1">
+            <p className="text-[10px] uppercase font-bold text-white/70 tracking-widest">
+              Sisa Uang Harian (Kas)
             </p>
             {transactionsLoading ? (
-              <Skeleton className="h-10 w-44 bg-white/20 mx-auto md:mx-0" />
+              <Skeleton className="h-12 w-56 bg-white/20" />
             ) : (
-              <p className="text-3xl font-serif font-bold tracking-tight">{formatCurrency(finalDailyMoney)}</p>
+              <p className="text-4xl md:text-5xl font-serif font-semibold tracking-tight font-numeric py-0.5">
+                {formatCurrency(finalDailyMoney)}
+              </p>
             )}
+          </div>
+
+          <div className="text-xs md:text-sm text-white/75 font-normal tracking-wide">
+            {formatDate(new Date())}
           </div>
         </div>
       </Card>
 
       {/* Main Stats Triad */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6 bg-white dark:bg-dark-card border border-natural-line/40 dark:border-white/5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow rounded-[32px]">
-          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl text-emerald-600 dark:text-emerald-400">
-            <TrendingUp size={24} />
+        <Card className="p-5 bg-white dark:bg-dark-card border border-natural-line/45 dark:border-white/5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow rounded-xl">
+          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg text-emerald-600 dark:text-emerald-400">
+            <TrendingUp size={20} />
           </div>
           <div>
-            <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest mb-0.5">Pemasukan Bulan Ini</p>
+            <p className="text-[10px] text-mute font-bold uppercase tracking-widest mb-0.5">Pemasukan Bulan Ini</p>
             {transactionsLoading ? (
               <Skeleton className="h-6 w-28 bg-natural-line" />
             ) : (
-              <p className="text-xl font-serif font-bold text-natural-ink dark:text-dark-text italic">{formatCurrency(currentMonthIncome)}</p>
+              <p className="text-lg font-display font-semibold text-natural-ink dark:text-dark-text font-numeric">{formatCurrency(currentMonthIncome)}</p>
             )}
           </div>
         </Card>
 
-        <Card className="p-6 bg-white dark:bg-dark-card border border-natural-line/40 dark:border-white/5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow rounded-[32px]">
-          <div className="p-4 bg-rose-50 dark:bg-rose-950/30 rounded-2xl text-rose-600 dark:text-rose-400">
-            <TrendingDown size={24} />
+        <Card className="p-5 bg-white dark:bg-dark-card border border-natural-line/45 dark:border-white/5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow rounded-xl">
+          <div className="p-3 bg-rose-50 dark:bg-rose-950/20 rounded-lg text-rose-600 dark:text-rose-400">
+            <TrendingDown size={20} />
           </div>
           <div>
-            <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest mb-0.5">Pengeluaran Bulan Ini</p>
+            <p className="text-[10px] text-mute font-bold uppercase tracking-widest mb-0.5">Pengeluaran Bulan Ini</p>
             {transactionsLoading ? (
               <Skeleton className="h-6 w-28 bg-natural-line" />
             ) : (
-              <p className="text-xl font-serif font-bold text-natural-ink dark:text-dark-text italic">{formatCurrency(currentMonthSpending)}</p>
+              <p className="text-lg font-display font-semibold text-natural-ink dark:text-dark-text font-numeric">{formatCurrency(currentMonthSpending)}</p>
             )}
           </div>
         </Card>
 
-        <Card className="p-6 bg-white dark:bg-dark-card border border-natural-line/40 dark:border-white/5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow rounded-[32px]">
-          <div className="p-4 bg-amber-50 dark:bg-amber-950/30 rounded-2xl text-amber-600 dark:text-amber-400">
-            <PiggyBank size={24} />
+        <Card className="p-5 bg-white dark:bg-dark-card border border-natural-line/45 dark:border-white/5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow rounded-xl">
+          <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg text-amber-600 dark:text-amber-400">
+            <PiggyBank size={20} />
           </div>
           <div>
-            <p className="text-[10px] text-natural-mute font-bold uppercase tracking-widest mb-0.5">Brankas Tabungan</p>
+            <p className="text-[10px] text-mute font-bold uppercase tracking-widest mb-0.5">Brankas Tabungan</p>
             {transactionsLoading ? (
               <Skeleton className="h-6 w-28 bg-natural-line" />
             ) : (
-              <p className="text-xl font-serif font-bold text-natural-ink dark:text-dark-text italic">{formatCurrency(totalSavings)}</p>
+              <p className="text-lg font-display font-semibold text-natural-ink dark:text-dark-text font-numeric">{formatCurrency(totalSavings)}</p>
             )}
           </div>
         </Card>
@@ -177,15 +186,15 @@ export const Dashboard = ({ user }: DashboardProps): React.ReactElement => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Recent Transactions */}
-        <Card className="lg:col-span-2 p-6.5 bg-white dark:bg-dark-card border border-natural-line/40 dark:border-white/5 shadow-sm rounded-[36px] flex flex-col">
+        <Card className="lg:col-span-2 p-5 bg-white dark:bg-dark-card border border-natural-line/40 dark:border-white/5 shadow-sm rounded-xl flex flex-col">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-lg font-serif font-bold text-natural-ink dark:text-dark-text italic">Transaksi Terbaru</h3>
-              <p className="text-[10px] text-natural-mute uppercase tracking-widest font-bold mt-0.5">Pelacakan Arus Kas Riil Anda</p>
+              <h3 className="text-lg font-display font-semibold text-ink dark:text-white">Transaksi Terbaru</h3>
+              <p className="text-[10px] text-mute uppercase tracking-widest font-semibold mt-0.5">Pelacakan Arus Kas Riil Anda</p>
             </div>
             <button 
               onClick={() => navigate('/money')}
-              className="text-xs text-natural-olive hover:text-natural-terracotta font-semibold flex items-center gap-1 transition-colors group"
+              className="text-xs text-accent hover:text-natural-terracotta font-semibold flex items-center gap-1 transition-colors group"
             >
               Kelola Transaksi <ChevronRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
@@ -222,19 +231,19 @@ export const Dashboard = ({ user }: DashboardProps): React.ReactElement => {
                   className="flex justify-between items-center p-3.5 hover:bg-natural-bg dark:hover:bg-dark-bg-deep rounded-2xl transition-all border border-transparent hover:border-natural-line/40 dark:hover:border-white/5"
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-2.5 rounded-xl ${
+                    <div className={`p-2.5 rounded-lg ${
                       tx.type === 'income' 
                         ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400' 
                         : 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400'
                     }`}>
-                      {tx.type === 'income' ? <ArrowUpRight size={18} /> : <ArrowDownLeft size={18} />}
+                      {tx.type === 'income' ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}
                     </div>
                     <div>
-                      <p className="font-bold text-natural-ink dark:text-dark-text text-sm">{tx.description || getCategoryLabel(tx.category)}</p>
-                      <p className="text-[10px] text-natural-mute font-semibold uppercase tracking-widest">{getCategoryLabel(tx.category)} • {tx.date}</p>
+                      <p className="font-semibold text-natural-ink dark:text-dark-text text-sm">{tx.description || getCategoryLabel(tx.category)}</p>
+                      <p className="text-[10px] text-mute font-semibold uppercase tracking-widest">{getCategoryLabel(tx.category)} • {tx.date}</p>
                     </div>
                   </div>
-                  <p className={`font-serif font-semibold text-sm ${
+                  <p className={`font-display font-semibold text-sm font-numeric ${
                     tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                   }`}>
                     {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
@@ -246,27 +255,46 @@ export const Dashboard = ({ user }: DashboardProps): React.ReactElement => {
         </Card>
 
         {/* Right Column: Dynamic Financial Context card */}
-        <Card className="p-6 bg-white dark:bg-dark-card border border-natural-line/40 dark:border-white/5 shadow-sm rounded-[36px] flex flex-col justify-between">
+        <Card className="p-6 bg-white dark:bg-dark-card border border-natural-line/45 dark:border-white/5 shadow-sm rounded-xl flex flex-col justify-between">
           <div className="space-y-4">
-            <div className="p-3 bg-natural-peach/10 text-natural-terracotta rounded-2xl w-fit">
-              <Wallet size={24} />
+            <div className="p-3 bg-natural-peach/15 text-natural-terracotta rounded-xl w-fit">
+              <Sparkles size={24} />
             </div>
-            <h4 className="text-xl font-serif font-bold text-natural-ink dark:text-dark-text italic">Panduan Penggunaan</h4>
-            <p className="text-xs text-natural-mute leading-relaxed">
-              Selamat datang di <strong>LifeTrack Keuangan</strong>. Aplikasi Anda sekarang telah dioptimalkan secara ketat untuk kebutuhan finansial saja. 
-            </p>
-            <ul className="text-xs text-natural-ink dark:text-dark-text space-y-2 list-disc pl-4">
-              <li>Kelola transaksi pengeluaran dan pemasukan harian Anda secara teratur.</li>
-              <li>Sistem tabungan kini dipisahkan untuk menjaga integritas dana harian Anda.</li>
-              <li>Gunakan menu navigasi <strong>Keuangan</strong> di sebelah kiri untuk laporan visual grafis yang mendalam.</li>
-            </ul>
+            <h4 className="text-lg font-display font-semibold text-ink dark:text-white tracking-tight">Kecerdasan Keuangan</h4>
+            
+            {/* Dynamic Tips Rotating / Displaying */}
+            <div className="p-4 bg-bg dark:bg-dark-bg-deep border border-line rounded-lg space-y-2">
+              <span className="text-[9px] font-bold text-natural-terracotta uppercase tracking-wider block">Tip Hari Ini</span>
+              <p className="text-xs text-mute dark:text-mute font-medium leading-relaxed">
+                "Batasi pengeluaran makan di luar dan belokkan sisa Rp 10.000 harian Anda langsung ke Brankas Tabungan untuk mempercepat tercapainya goal finansial."
+              </p>
+            </div>
+
+            {/* Quick Action Shortcuts */}
+            <div className="space-y-2.5 pt-2">
+              <span className="text-[10px] font-bold text-mute uppercase tracking-widest block">Akses Cepat</span>
+              <div className="grid grid-cols-2 gap-2">
+                <button 
+                  onClick={() => navigate('/money')}
+                  className="p-2.5 text-center bg-bg dark:bg-dark-bg-deep hover:bg-line border border-line rounded-md text-xs font-semibold text-ink transition-all flex items-center justify-center gap-1"
+                >
+                  <ArrowUpRight size={13} className="text-emerald-500" /> + Masuk
+                </button>
+                <button 
+                  onClick={() => navigate('/money')}
+                  className="p-2.5 text-center bg-bg dark:bg-dark-bg-deep hover:bg-line border border-line rounded-md text-xs font-semibold text-ink transition-all flex items-center justify-center gap-1"
+                >
+                  <ArrowDownLeft size={13} className="text-rose-500" /> + Keluar
+                </button>
+              </div>
+            </div>
           </div>
           
           <button 
             onClick={() => navigate('/money')}
-            className="w-full bg-natural-olive hover:bg-natural-olive/95 text-white p-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-natural-olive/10 mt-6"
+            className="w-full bg-accent hover:bg-accent/95 text-white p-3.5 rounded-md font-semibold text-xs flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all shadow-sm mt-6"
           >
-            <Plus size={16} /> Catat / Kelola Transaksi
+            <Plus size={16} /> Kelola Transaksi Selengkapnya
           </button>
         </Card>
       </div>

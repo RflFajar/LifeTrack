@@ -36,13 +36,10 @@ service cloud.firestore {
     }
 
     function isValidProfile(data) {
-      return data.keys().hasAll(['height', 'weight', 'age', 'goal', 'userId', 'gender'])
+      return data.keys().hasAll(['userId', 'job', 'budget'])
         && data.userId == request.auth.uid
-        && data.height is number && data.height >= 50 && data.height <= 300
-        && data.weight is number && data.weight >= 20 && data.weight <= 500
-        && data.age is number && data.age >= 1 && data.age <= 150
-        && data.gender in ['male', 'female']
-        && data.goal in ['Bulking', 'Cutting', 'Maintenance'];
+        && data.job is string && data.job.size() <= 150
+        && data.budget is number && data.budget >= 0;
     }
 
     function isValidAchievement(data) {

@@ -11,6 +11,7 @@ import { useLocation } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { useProfile } from '../../hooks/useProfile';
 import { Profile } from '../../pages/Profile';
+import { cn } from '../../utils/cn';
 
 import { Sidebar } from './Sidebar';
 import { MobileNav } from './MobileNav';
@@ -37,7 +38,7 @@ export const AppShell = ({ children, user, logout }: AppShellProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-natural-bg pb-20 md:pb-0 md:pl-20 text-natural-ink font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-natural-bg pb-20 md:pb-0 md:pl-32 text-natural-ink font-sans transition-colors duration-300">
       <Sidebar logout={logout} />
 
       {/* Main Content */}
@@ -52,22 +53,33 @@ export const AppShell = ({ children, user, logout }: AppShellProps) => {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <button 
-              onClick={toggleTheme}
-              className="p-3 bg-white dark:bg-dark-card rounded-2xl shadow-sm border border-natural-line text-natural-mute hover:text-natural-terracotta transition-colors"
-            >
-              {isDark ? <Sun className="w-5 h-5 text-natural-peach" /> : <Moon className="w-5 h-5" />}
-            </button>
+            {/* Custom Theme Toggle Switch */}
+            <div className="bg-white dark:bg-dark-card border border-natural-line/80 dark:border-white/5 h-14 px-4 rounded-3xl shadow-sm flex items-center justify-center gap-3 select-none">
+              <Sun size={16} className={cn("transition-colors", isDark ? "text-natural-mute" : "text-amber-500")} />
+              <button 
+                onClick={toggleTheme}
+                className="relative inline-flex h-6 w-11 items-center shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none bg-natural-olive"
+                aria-label="Toggle Theme"
+              >
+                <span 
+                  className={cn(
+                    "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                    isDark ? "translate-x-6" : "translate-x-1"
+                  )}
+                />
+              </button>
+              <Moon size={16} className={cn("transition-colors", isDark ? "text-[#FFE8D6]" : "text-natural-mute")} />
+            </div>
             <button 
               onClick={() => setIsProfileOpen(true)} 
-              className="bg-white dark:bg-dark-card p-2 rounded-2xl shadow-sm border border-natural-line hover:border-natural-olive transition-all flex items-center gap-2"
+              className="bg-white dark:bg-dark-card h-14 pl-5 pr-2.5 rounded-3xl shadow-sm border border-natural-line hover:border-natural-olive dark:border-white/5 dark:hover:border-white/15 transition-all flex items-center gap-3 shrink-0"
               title="Buka Profil"
             >
-              <div className="text-right mr-2 hidden sm:block">
+              <div className="text-right mr-0.5 hidden sm:block">
                 <p className="text-[10px] uppercase tracking-widest text-natural-mute font-bold">User Status</p>
-                <p className="text-xs font-medium text-natural-ink dark:text-dark-text italic">Aktif & Sinkron</p>
+                <p className="text-xs font-semibold text-natural-ink dark:text-dark-text italic font-serif">Aktif & Sinkron</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-natural-peach flex items-center justify-center overflow-hidden border border-natural-line shrink-0">
+              <div className="w-9 h-9 rounded-full bg-natural-peach/40 flex items-center justify-center overflow-hidden border border-natural-line/60 shrink-0">
                 {(profile?.photoURL || user.photoURL) ? (
                   <img 
                     src={profile?.photoURL || user.photoURL || undefined} 
@@ -76,7 +88,7 @@ export const AppShell = ({ children, user, logout }: AppShellProps) => {
                     referrerPolicy="no-referrer" 
                   />
                 ) : (
-                  <UserIcon className="text-natural-mute" />
+                  <UserIcon className="text-natural-mute w-4 h-4" />
                 )}
               </div>
             </button>
