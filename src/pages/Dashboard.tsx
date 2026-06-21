@@ -186,21 +186,21 @@ export const Dashboard = ({ user }: DashboardProps): React.ReactElement => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Recent Transactions */}
-        <Card className="lg:col-span-2 p-5 bg-white dark:bg-dark-card border border-natural-line/40 dark:border-white/5 shadow-sm rounded-xl flex flex-col">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h3 className="text-lg font-display font-semibold text-ink dark:text-white">Transaksi Terbaru</h3>
-              <p className="text-[10px] text-mute uppercase tracking-widest font-semibold mt-0.5">Pelacakan Arus Kas Riil Anda</p>
+        <Card className="lg:col-span-2 p-4 sm:p-5 bg-white dark:bg-dark-card border border-natural-line/40 dark:border-white/5 shadow-sm rounded-[32px] flex flex-col">
+          <div className="flex items-center justify-between mb-4 sm:mb-5 gap-2">
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-display font-semibold text-ink dark:text-white truncate">Transaksi Terbaru</h3>
+              <p className="text-[9px] sm:text-[10px] text-mute uppercase tracking-widest font-semibold mt-0.5 truncate">Pelacakan Arus Kas Riil Anda</p>
             </div>
             <button 
               onClick={() => navigate('/money')}
-              className="text-xs text-accent hover:text-natural-terracotta font-semibold flex items-center gap-1 transition-colors group"
+              className="text-[10px] sm:text-xs text-accent hover:text-natural-terracotta font-semibold flex items-center gap-0.5 sm:gap-1 transition-colors group shrink-0"
             >
-              Kelola Transaksi <ChevronRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+              Kelola Transaksi <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
-          <div className="space-y-3 flex-1">
+          <div className="space-y-2 flex-1">
             {transactionsLoading ? (
               Array.from({ length: 3 }).map((_, idx) => (
                 <div key={idx} className="flex justify-between items-center p-3 border-b border-natural-line/20">
@@ -228,22 +228,26 @@ export const Dashboard = ({ user }: DashboardProps): React.ReactElement => {
               latestTransactions.map((tx) => (
                 <div 
                   key={tx.id} 
-                  className="flex justify-between items-center p-3.5 hover:bg-natural-bg dark:hover:bg-dark-bg-deep rounded-2xl transition-all border border-transparent hover:border-natural-line/40 dark:hover:border-white/5"
+                  className="flex justify-between items-center p-2.5 sm:p-3.5 hover:bg-natural-bg dark:hover:bg-dark-bg-deep rounded-2xl transition-all border border-transparent hover:border-natural-line/40 dark:hover:border-white/5"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-2.5 rounded-lg ${
+                  <div className="flex items-center gap-2.5 sm:gap-4 flex-1 min-w-0">
+                    <div className={`p-2 sm:p-2.5 rounded-xl shrink-0 ${
                       tx.type === 'income' 
                         ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400' 
                         : 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400'
                     }`}>
-                      {tx.type === 'income' ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}
+                      {tx.type === 'income' ? <ArrowUpRight size={14} className="sm:w-4 sm:h-4" /> : <ArrowDownLeft size={14} className="sm:w-4 sm:h-4" />}
                     </div>
-                    <div>
-                      <p className="font-semibold text-natural-ink dark:text-dark-text text-sm">{tx.description || getCategoryLabel(tx.category)}</p>
-                      <p className="text-[10px] text-mute font-semibold uppercase tracking-widest">{getCategoryLabel(tx.category)} • {tx.date}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-natural-ink dark:text-dark-text text-xs sm:text-sm truncate pr-1">
+                        {tx.description || getCategoryLabel(tx.category)}
+                      </p>
+                      <p className="text-[9px] sm:text-[10px] text-mute font-semibold uppercase tracking-widest truncate">
+                        {getCategoryLabel(tx.category)} • {tx.date}
+                      </p>
                     </div>
                   </div>
-                  <p className={`font-display font-semibold text-sm font-numeric ${
+                  <p className={`font-display font-semibold text-xs sm:text-sm md:text-base font-numeric whitespace-nowrap shrink-0 ml-2 font-bold ${
                     tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                   }`}>
                     {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}

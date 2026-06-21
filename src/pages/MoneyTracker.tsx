@@ -634,26 +634,26 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
 
           {/* Activity List with Filter & Search */}
           <Card className="p-0 overflow-hidden border-natural-line/50">
-            <div className="p-6 border-b border-natural-line flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h3 className="font-serif italic text-natural-ink font-bold text-lg">Daftar Transaksi</h3>
+            <div className="p-4 sm:p-6 border-b border-natural-line flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+              <h3 className="font-serif italic text-natural-ink font-bold text-base sm:text-lg">Daftar Transaksi</h3>
               
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-natural-mute" size={14} />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="relative flex-1 sm:flex-initial">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-natural-mute" size={13} />
                   <input 
                     type="text" 
                     placeholder="Cari..." 
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    className="pl-9 pr-4 py-2 bg-natural-bg border border-natural-line rounded-xl text-xs outline-none focus:ring-1 focus:ring-natural-olive w-32 md:w-48"
+                    className="pl-8.5 pr-3 py-1.5 sm:py-2 bg-natural-bg border border-natural-line rounded-xl text-xs outline-none focus:ring-1 focus:ring-natural-olive w-full sm:w-32 md:w-48 transition-all"
                   />
                 </div>
                 <div className="relative">
-                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-natural-mute" size={14} />
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-natural-mute" size={13} />
                   <select 
                     value={filterCat}
                     onChange={e => setFilterCat(e.target.value)}
-                    className="pl-9 pr-6 py-2 bg-natural-bg border border-natural-line rounded-xl text-xs outline-none appearance-none cursor-pointer"
+                    className="pl-8.5 pr-6 py-1.5 sm:py-2 bg-natural-bg border border-natural-line rounded-xl text-xs outline-none appearance-none cursor-pointer"
                   >
                     <option value="all">Semua</option>
                     {TRANSACTION_CATEGORIES.map(category => (
@@ -666,9 +666,9 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
 
             <div className="overflow-y-auto no-scrollbar">
               {filteredTxs.length === 0 ? (
-                <div className="p-20 text-center">
-                  <Search className="w-12 h-12 text-natural-line mx-auto mb-4 opacity-30" />
-                  <p className="text-natural-mute font-serif italic text-sm">Tidak ada transaksi yang cocok dengan filter atau pencarian.</p>
+                <div className="p-12 sm:p-20 text-center">
+                  <Search className="w-10 h-10 sm:w-12 sm:h-12 text-natural-line mx-auto mb-4 opacity-30" />
+                  <p className="text-natural-mute font-serif italic text-xs sm:text-sm">Tidak ada transaksi yang cocok dengan filter atau pencarian.</p>
                 </div>
               ) : (
                 <div className="flex flex-col">
@@ -678,11 +678,11 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       key={tx.id} 
-                      className="p-5 border-b border-natural-line/30 flex items-center justify-between hover:bg-natural-bg/30 transition-colors group"
+                      className="p-3.5 sm:p-5 border-b border-natural-line/30 flex items-center justify-between hover:bg-natural-bg/30 transition-colors group"
                     >
-                      <div className="flex items-center gap-4 flex-1">
+                      <div className="flex items-center gap-2.5 sm:gap-4 flex-1 min-w-0">
                         <div className={cn(
-                          "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm relative",
+                          "w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 shadow-sm relative",
                           tx.category === 'tabungan' ? "bg-blue-100 text-blue-600 ring-4 ring-blue-50" : 
                           tx.type === 'income' ? "bg-natural-olive/10 text-natural-olive" : "bg-natural-terracotta/10 text-natural-terracotta"
                         )}>
@@ -722,63 +722,63 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
                             </div>
                           ) : (
                             <div onClick={() => { setEditingId(tx.id); setEditData(tx); }} className="cursor-pointer group">
-                              <div className="flex items-center gap-2">
-                                <p className="font-serif font-bold text-natural-ink truncate group-hover:text-natural-olive transition-colors">
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-serif font-bold text-xs sm:text-sm text-natural-ink truncate group-hover:text-natural-olive transition-colors max-w-[150px] sm:max-w-md">
                                   {tx.description || getCategoryLabel(tx.category)}
                                 </p>
                                 {tx.category === 'tabungan' && (
-                                  <span className="text-[8px] bg-blue-500 text-white px-2 py-0.5 rounded-full font-black tracking-tighter uppercase">Savings</span>
+                                  <span className="text-[7px] sm:text-[8px] bg-blue-500 text-white px-1.5 py-0.5 rounded-full font-black tracking-tighter uppercase shrink-0">Savings</span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 mt-0.5">
+                              <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-0.5 sm:mt-1">
                                 {tx.description && (
-                                  <span className="text-[10px] text-natural-mute italic">({getCategoryLabel(tx.category)})</span>
+                                  <span className="text-[9px] sm:text-[10px] text-natural-mute italic shrink-0">({getCategoryLabel(tx.category)})</span>
                                 )}
                                 <span className={cn(
-                                  "text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest",
+                                  "text-[8px] sm:text-[9.5px] px-1 sm:px-1.5 py-0.5 rounded-md font-bold uppercase tracking-widest shrink-0",
                                   tx.category === 'tabungan' ? "bg-blue-100 text-blue-600" :
                                   tx.type === 'income' ? "bg-natural-olive/10 text-natural-olive" : "bg-natural-terracotta/10 text-natural-terracotta"
                                 )}>
                                   {tx.category === 'tabungan' ? 'Tabungan' : tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
                                 </span>
-                                <span className="text-[10px] text-natural-mute font-bold uppercase tracking-tight">{format(parseISO(tx.date), 'dd MMM yyyy')}</span>
+                                <span className="text-[9px] sm:text-[10px] text-natural-mute font-bold uppercase tracking-tight shrink-0">{format(parseISO(tx.date), 'dd MMM yyyy')}</span>
                               </div>
                             </div>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <p className={cn("font-display font-semibold text-md font-numeric", tx.type === 'income' ? "text-natural-olive" : "text-natural-terracotta")}>
+                      <div className="flex items-center gap-2 sm:gap-6 shrink-0 ml-2">
+                        <div className="text-right shrink-0">
+                          <p className={cn("font-display font-semibold text-xs sm:text-sm md:text-base font-numeric whitespace-nowrap", tx.type === 'income' ? "text-natural-olive font-bold" : "text-natural-terracotta font-bold")}>
                             {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
                           </p>
                         </div>
                         
                         {confirmDeleteId === tx.id ? (
-                          <div className="flex items-center gap-2 animate-in zoom-in duration-200">
+                          <div className="flex items-center gap-1 sm:gap-2 animate-in zoom-in duration-200 shrink-0">
                             <button 
                               onClick={() => handleDelete(tx.id)}
-                              className="bg-red-500 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold shadow-sm hover:bg-red-600 transition-colors"
+                              className="bg-red-500 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-bold shadow-sm hover:bg-red-600 transition-colors"
                             >Hapus</button>
                             <button 
                               onClick={() => setConfirmDeleteId(null)}
-                              className="bg-natural-bg text-natural-mute px-3 py-1.5 rounded-xl text-[10px] font-bold hover:bg-natural-line transition-colors"
+                              className="bg-natural-bg text-natural-mute px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-bold hover:bg-natural-line transition-colors"
                             >Batal</button>
                           </div>
                         ) : (
-                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex gap-1 sm:gap-2 opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 transition-opacity shrink-0">
                             <button 
                               onClick={() => { setEditingId(tx.id); setEditData(tx); }}
-                              className="p-2 bg-natural-bg text-natural-mute hover:text-natural-olive rounded-full transition-colors"
+                              className="p-1.5 sm:p-2 bg-natural-bg text-natural-mute hover:text-natural-olive rounded-full transition-colors"
                             >
-                              <RefreshCw size={16} />
+                              <RefreshCw size={12} className="sm:w-4 sm:h-4" />
                             </button>
                             <button 
                               onClick={() => setConfirmDeleteId(tx.id)}
-                              className="p-2 bg-natural-bg text-natural-mute hover:text-red-500 rounded-full transition-colors"
+                              className="p-1.5 sm:p-2 bg-natural-bg text-natural-mute hover:text-red-500 rounded-full transition-colors"
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={12} className="sm:w-4 sm:h-4" />
                             </button>
                           </div>
                         )}
