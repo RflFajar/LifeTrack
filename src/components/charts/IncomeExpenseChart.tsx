@@ -18,8 +18,8 @@ interface IncomeExpenseChartProps {
 }
 
 export const IncomeExpenseChart = ({ transactions }: IncomeExpenseChartProps) => {
-  // Generate last 6 months
-  const last6Months = Array.from({ length: 6 }).map((_, i) => {
+  // Generate last 3 months
+  const last3Months = Array.from({ length: 3 }).map((_, i) => {
     const d = subMonths(new Date(), i);
     return {
       monthKey: format(d, 'yyyy-MM'),
@@ -34,7 +34,7 @@ export const IncomeExpenseChart = ({ transactions }: IncomeExpenseChartProps) =>
   transactions.forEach(tx => {
     const txDate = parseISO(tx.date);
     const monthKey = format(txDate, 'yyyy-MM');
-    const monthData = last6Months.find(m => m.monthKey === monthKey);
+    const monthData = last3Months.find(m => m.monthKey === monthKey);
     if (monthData) {
       if (tx.category === 'tabungan') {
         if (tx.type === 'expense') {
@@ -55,7 +55,7 @@ export const IncomeExpenseChart = ({ transactions }: IncomeExpenseChartProps) =>
   return (
     <div className="h-[250px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={last6Months} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+        <BarChart data={last3Months} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E3E1DE" />
           <XAxis 
             dataKey="monthLabel" 

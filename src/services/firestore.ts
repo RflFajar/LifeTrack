@@ -66,6 +66,31 @@ const handleFirestoreError = (
   return errorInfo;
 };
 
+type ListenerCallback = (data: any[]) => void;
+
+interface ActiveListener {
+  id: string;
+  path: string;
+  callback: ListenerCallback;
+  constraints: QueryConstraint[];
+}
+
+const activeListeners: ActiveListener[] = [];
+
+export const notifyListeners = async (path: string) => {
+  const matchingListeners = activeListeners.filter(l => l.path === path);
+  for (const listener of matchingListeners) {
+    try {
+      const q = query(collection(db, listener.path), ...listener.constraints);
+      const snap = await getDocs(q);
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      listener.callback(data);
+    } catch (error) {
+      console.error("Error refreshing listener for path:", listener.path, error);
+    }
+  }
+};
+
 /**
  * safeAddDoc: Adds a document and shows toast
  */
@@ -77,6 +102,7 @@ export const safeAddDoc = async (
   try {
     const res = await addDoc(collection(db, path), data);
     showToast(successMsg, 'success');
+    notifyListeners(path);
     return res.id;
   } catch (error) {
     handleFirestoreError(error, 'create', path);
@@ -96,6 +122,7 @@ export const safeDeleteDoc = async (
     const docRef = doc(db, path, id);
     await deleteDoc(docRef);
     showToast(successMsg, 'success');
+    notifyListeners(path);
     return true;
   } catch (error) {
     handleFirestoreError(error, 'delete', `${path}/${id}`);
@@ -116,6 +143,7 @@ export const safeUpdateDoc = async (
     const docRef = doc(db, path, id);
     await updateDoc(docRef, data);
     showToast(successMsg, 'success');
+    notifyListeners(path);
     return true;
   } catch (error) {
     handleFirestoreError(error, 'update', `${path}/${id}`);
@@ -136,6 +164,7 @@ export const safeSetDoc = async (
     const docRef = doc(db, path, id);
     await setDoc(docRef, data, { merge: true });
     showToast(successMsg, 'success');
+    notifyListeners(path);
     return true;
   } catch (error) {
     handleFirestoreError(error, 'write', `${path}/${id}`);
@@ -212,12 +241,32 @@ export const watchCollection = <T extends DocumentData>(
   callback: (data: T[]) => void, 
   constraints: QueryConstraint[] = []
 ) => {
+  const listenerId = Math.random().toString(36).substring(2);
+  const listener: ActiveListener = {
+    id: listenerId,
+    path,
+    callback,
+    constraints
+  };
+  
+  activeListeners.push(listener);
+
+  // Initial fetch using getDocs (completely avoids onSnapshot's iframe/WebSocket connection crashes)
   const q = query(collection(db, path), ...constraints);
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as T)));
-  }, (error) => {
+  getDocs(q).then((snap) => {
+    if (activeListeners.some(l => l.id === listenerId)) {
+      callback(snap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as T)));
+    }
+  }).catch((error) => {
     handleFirestoreError(error, 'list', path, true);
   });
+
+  return () => {
+    const idx = activeListeners.findIndex(l => l.id === listenerId);
+    if (idx !== -1) {
+      activeListeners.splice(idx, 1);
+    }
+  };
 };
 
 /**

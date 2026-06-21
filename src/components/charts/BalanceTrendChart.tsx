@@ -38,10 +38,24 @@ export const BalanceTrendChart = ({ transactions }: BalanceTrendChartProps) => {
     }
   });
 
+  // Sample to maximum 5 items evenly spaced to avoid crowding
+  const sampledData = React.useMemo(() => {
+    const len = dailyData.length;
+    if (len <= 5) return dailyData;
+    
+    return [
+      dailyData[0],
+      dailyData[Math.floor(len * 0.25)],
+      dailyData[Math.floor(len * 0.5)],
+      dailyData[Math.floor(len * 0.75)],
+      dailyData[len - 1]
+    ];
+  }, [dailyData]);
+
   return (
     <div className="h-[250px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={dailyData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+        <AreaChart data={sampledData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
           <defs>
             <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#6B8E23" stopOpacity={0.3}/>

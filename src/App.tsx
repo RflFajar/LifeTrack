@@ -17,12 +17,8 @@ import { AppShell } from './components/layout/AppShell';
 
 // Lazy Pages
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
-const ScheduleTracker = lazy(() => import('./pages/ScheduleTracker').then(m => ({ default: m.ScheduleTracker })));
 const MoneyTracker = lazy(() => import('./pages/MoneyTracker').then(m => ({ default: m.MoneyTracker })));
-const HealthTracker = lazy(() => import('./pages/HealthTracker').then(m => ({ default: m.HealthTracker })));
-const SmartInsights = lazy(() => import('./pages/SmartInsights').then(m => ({ default: m.SmartInsights })));
 const Onboarding = lazy(() => import('./pages/Onboarding').then(m => ({ default: m.Onboarding })));
-const SocialHub = lazy(() => import('./pages/SocialHub').then(m => ({ default: m.SocialHub })));
 
 const LoadingScreen = () => (
   <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
@@ -89,11 +85,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard user={user} />} />
-              <Route path="/schedule" element={<ScheduleTracker user={user} />} />
               <Route path="/money" element={<MoneyTracker user={user} />} />
-              <Route path="/health" element={<HealthTracker user={user} />} />
-              <Route path="/insights" element={<SmartInsights user={user} />} />
-              <Route path="/social" element={<SocialHub user={user} />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Suspense>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Timestamp, doc, onSnapshot } from 'firebase/firestore';
+import { Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { watchCollection, safeSetDoc } from '../services/firestore';
+import { safeSetDoc } from '../services/firestore';
 import { UserProfile } from '../types';
 import { calculateBMI } from '../utils/formatters';
 
@@ -20,30 +20,39 @@ export function useProfile(userId: string | undefined): {
       return;
     }
 
-    const unsubscribe = onSnapshot(doc(db, `users/${userId}/profile/data`), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        // Simple type gate
-        if (data) {
-          setProfile(data as UserProfile);
+    const fetchProfile = async () => {
+      setLoading(true);
+      try {
+        const snap = await getDoc(doc(db, `users/${userId}/profile/data`));
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data) {
+            setProfile(data as UserProfile);
+          }
         }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    };
 
-    return unsubscribe;
+    fetchProfile();
   }, [userId]);
 
   const saveProfile = async (data: UserProfile): Promise<void> => {
     if (!userId) return;
-    await safeSetDoc(`users/${userId}/profile`, 'data', {
+    const success = await safeSetDoc(`users/${userId}/profile`, 'data', {
       ...data,
       userId,
       updatedAt: Timestamp.now()
     }, 'Profil berhasil diperbarui');
+    if (success) {
+      setProfile(data);
+    }
   };
 
-  const bmi = profile ? calculateBMI(profile.weight, profile.height) : "0";
+  const bmi = profile ? calculateBMI(profile.weight || 70, profile.height || 170) : "0";
 
   return { profile, loading, saveProfile, bmi };
 }

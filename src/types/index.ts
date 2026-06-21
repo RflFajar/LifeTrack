@@ -1,18 +1,5 @@
 import { User } from 'firebase/auth';
 
-export interface ScheduleItem {
-  id: string;
-  title: string;
-  startTime: string;
-  endTime?: string;
-  date: string;
-  activityType: string;
-  userId: string;
-  recurrence?: 'none' | 'daily' | 'weekly' | 'monthly';
-  reminderMinutes?: number;
-  completedDates?: string[];
-}
-
 export interface Transaction {
   id: string;
   type: 'income' | 'expense';
@@ -26,11 +13,11 @@ export interface Transaction {
 }
 
 export interface UserProfile {
-  height: number;
-  weight: number;
-  age: number;
-  gender: 'male' | 'female';
-  goal: string;
+  height?: number;
+  weight?: number;
+  age?: number;
+  gender?: 'male' | 'female';
+  goal?: string;
   job: string;
   budget: number;
   equipment?: string;
@@ -38,85 +25,26 @@ export interface UserProfile {
   streak?: number;
   lastActive?: string;
   theme?: 'light' | 'dark';
-}
-
-export interface WeightEntry {
-  id: string;
-  weight: number;
-  date: string;
-  userId: string;
-}
-
-export interface LoggedMeal {
-  id: string;
-  name: string;
-  protein: number;
-  calories: number;
-  carbs: number;
-}
-
-export interface WorkoutPlan {
-  day: string;
-  exercises: Array<{
-    name: string;
-    sets: string;
-    reps: string;
-    notes?: string;
-  }>;
-}
-
-export interface NutritionRecommendation {
-  meals: Array<{
-    name: string;
-    calories: number;
-    protein: number;
-    carbohydrates: number;
-    reason: string;
-  }>;
-  totalCalories: number;
-  dailyTarget: {
-    protein: number;
-    carbohydrates: number;
-  };
-}
-
-export interface Achievement {
-  id: string;
-  type: 'streak' | 'workout' | 'weight' | 'budget';
-  title: string;
-  description: string;
-  unlockedAt: string;
-  icon: string;
-}
-
-export interface SharedItem {
-  id: string;
-  type: 'workout' | 'recipe' | 'finance';
-  title: string;
-  creatorId: string;
-  creatorName: string;
-  content: Record<string, unknown>;
-  likes: number;
-  createdAt: string;
-  userIds?: string[]; // For specific sharing
-}
-
-export interface Challenge {
-  id: string;
-  type: 'budget' | 'fitness';
-  title: string;
-  description: string;
-  target: number;
-  participants: string[];
-  ownerId: string;
-  status: 'active' | 'completed';
-  startDate: string;
-  endDate: string;
-}
-
-export interface UserConnection {
-  userId: string;
-  displayName: string;
+  
+  // Biodata / Profil Pribadi Baru
+  name?: string;
+  email?: string;
+  phone?: string;
+  bio?: string;
   photoURL?: string;
-  followedAt: string;
+  birthDate?: string;
+  currency?: string;
 }
+
+export interface SavingGoal {
+  id: string;
+  userId: string;
+  title: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline?: string;
+  category?: string;
+  description?: string;
+  createdAt: string;
+}
+

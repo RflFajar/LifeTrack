@@ -131,9 +131,29 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "date", "completed"]
+    },
+    "SavingGoal": {
+      "title": "Saving Goal",
+      "description": "Represents user's specific targets for saving money.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "targetAmount": { "type": "number" },
+        "currentAmount": { "type": "number" },
+        "category": { "type": "string" },
+        "deadline": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "targetAmount", "currentAmount", "createdAt"]
     }
   },
   "firestore": {
+    "/users/{userId}/saving_goals/{goalId}": {
+      "schema": "SavingGoal",
+      "description": "User's saving goals details."
+    },
     "/users/{userId}/schedule/{itemId}": {
       "schema": "ScheduleItem",
       "description": "User's daily schedule items."

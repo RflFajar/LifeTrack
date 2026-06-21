@@ -1,6 +1,6 @@
 {
-  "name": "LifeTrack Engine",
-  "description": "A comprehensive daily life assistant for tracking schedules, finances, fitness, and nutrition with AI-personalized recommendations.",
+  "name": "LifeTrack Keuangan",
+  "description": "Aplikasi pelacakan keuangan harian, sisa uang kas harian, dan brankas tabungan dengan antarmuka yang bersih dan fokus.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

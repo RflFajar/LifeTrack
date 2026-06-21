@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { safeSetDoc } from '../services/firestore';
 
@@ -18,24 +18,35 @@ export function useBudgets(userId: string | undefined, monthKey: string): {
   useEffect(() => {
     if (!userId) return;
 
-    const docRef = doc(db, `users/${userId}/budgets`, monthKey);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setBudgets(data?.categories || {});
-      } else {
-        setBudgets({});
+    const fetchBudgets = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, `users/${userId}/budgets`, monthKey);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setBudgets(data?.categories || {});
+        } else {
+          setBudgets({});
+        }
+      } catch (error) {
+        console.error("Error fetching budgets:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    };
 
-    return unsubscribe;
+    fetchBudgets();
   }, [userId, monthKey]);
 
   const setCategoryBudget = async (categoryId: string, amount: number): Promise<boolean> => {
     if (!userId) return false;
     const newBudgets = { ...budgets, [categoryId]: amount };
-    return await safeSetDoc(`users/${userId}/budgets`, monthKey, { categories: newBudgets }, 'Anggaran berhasil diperbarui');
+    const success = await safeSetDoc(`users/${userId}/budgets`, monthKey, { categories: newBudgets }, 'Anggaran berhasil diperbarui');
+    if (success) {
+      setBudgets(newBudgets);
+    }
+    return success;
   };
 
   return { budgets, loading, setCategoryBudget };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Info, Calendar, Wallet, Dumbbell, BrainCircuit, LogOut } from 'lucide-react';
+import { Info, Wallet, LogOut, User } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '../../utils/cn';
 
@@ -16,10 +16,7 @@ export const Sidebar = ({ logout }: SidebarProps) => {
       </div>
       <div className="flex flex-col gap-6 flex-1">
         <NavIcon to="/dashboard" icon={<Info />} label="Dash" />
-        <NavIcon to="/schedule" icon={<Calendar />} label="Jadwal" />
-        <NavIcon to="/money" icon={<Wallet />} label="Uang" />
-        <NavIcon to="/health" icon={<Dumbbell />} label="Sehat" />
-        <NavIcon to="/insights" icon={<BrainCircuit />} label="Insights" />
+        <NavIcon to="/money" icon={<Wallet />} label="Keuangan" />
       </div>
       <div className="mt-auto">
         <button onClick={logout} className="p-3 text-slate-400 hover:text-red-500 transition-colors">

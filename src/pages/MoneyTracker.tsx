@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, 
@@ -25,7 +25,9 @@ import {
   Target,
   Briefcase,
   Heart,
-  ArrowUpRight
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { format, parseISO, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfYear, endOfYear, subMonths, isWithinInterval } from 'date-fns';
@@ -33,6 +35,7 @@ import { Card } from '../components/ui/Card';
 import { CategorySelect } from '../components/ui/CategorySelect';
 import { useTransactions } from '../hooks/useTransactions';
 import { useBudgets } from '../hooks/useBudgets';
+import { useSavingGoals } from '../hooks/useSavingGoals';
 import { formatCurrency } from '../utils/formatters';
 import { getFinancialAdvice } from '../services/gemini';
 import { cn } from '../utils/cn';
@@ -49,6 +52,7 @@ import { LucideIcon } from 'lucide-react';
 import { IncomeExpenseChart } from '../components/charts/IncomeExpenseChart';
 import { CategoryPieChart } from '../components/charts/CategoryPieChart';
 import { BalanceTrendChart } from '../components/charts/BalanceTrendChart';
+import { SavingGoalsCard } from '../components/SavingGoalsCard';
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Utensils,
@@ -115,16 +119,20 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
     });
   }, [allTxs, period, customRange]);
 
-  // Data specifically for 6-month charts
+  // Data specifically for 3-month charts
   const chartTxs = useMemo(() => {
     const now = new Date();
-    const start = subMonths(startOfMonth(now), 5);
+    const start = subMonths(startOfMonth(now), 2);
     return allTxs.filter(tx => parseISO(tx.date) >= start);
   }, [allTxs]);
 
   // Budget management
   const currentMonthKey = format(new Date(), 'yyyy-MM');
   const { budgets, setCategoryBudget } = useBudgets(user.uid, currentMonthKey);
+
+  // Saving goals integration
+  const { goals } = useSavingGoals(user.uid);
+  const [selectedGoalId, setSelectedGoalId] = useState('');
 
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
@@ -145,6 +153,12 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
   // Filter & Search
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCat, setFilterCat] = useState('all');
+
+  // Pagination & Reset states
+  const [currentPage, setCurrentPage] = useState(1);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterCat, searchTerm, period]);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<Transaction>>({});
@@ -176,6 +190,11 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
     });
   }, [txs, searchTerm, filterCat]);
 
+  const paginatedTxs = useMemo(() => {
+    const startIdx = (currentPage - 1) * 10;
+    return filteredTxs.slice(startIdx, startIdx + 10);
+  }, [filteredTxs, currentPage]);
+
   const spendingPerCategory = useMemo(() => {
     const totals: Record<string, number> = {};
     txs.forEach(tx => {
@@ -194,9 +213,24 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
       return;
     }
     setTxLoading(true);
-    await addTransaction(type, parseFloat(amount), cat, date, description);
+
+    let finalDescription = description;
+    let goalIdParam: string | undefined = undefined;
+
+    if (cat === 'tabungan' && selectedGoalId) {
+      const selectedGoal = goals.find(g => g.id === selectedGoalId);
+      if (selectedGoal) {
+        goalIdParam = selectedGoalId;
+        if (!finalDescription.trim()) {
+          finalDescription = `Menabung untuk: ${selectedGoal.title}`;
+        }
+      }
+    }
+
+    await addTransaction(type, parseFloat(amount), cat, date, finalDescription, goalIdParam);
     setAmount('');
     setDescription('');
+    setSelectedGoalId('');
     setTxLoading(false);
   };
 
@@ -428,24 +462,33 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
                 />
               </div>
 
-              <AnimatePresence>
-                {(cat === 'lainnya' || description.length > 0) && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-hidden"
+              {cat === 'tabungan' && goals.length > 0 && (
+                <div className="animate-in slide-in-from-top-2 duration-200">
+                  <label className="text-[10px] font-bold text-natural-mute uppercase tracking-widest">Tujuan / Goal Tabungan</label>
+                  <select 
+                    value={selectedGoalId} 
+                    onChange={e => setSelectedGoalId(e.target.value)}
+                    className="w-full mt-1 p-3.5 bg-natural-bg border border-natural-line rounded-2xl outline-none text-xs text-natural-ink cursor-pointer"
                   >
-                    <label className="text-[10px] font-bold text-natural-mute uppercase tracking-widest">Deskripsi / Catatan</label>
-                    <input 
-                      type="text" 
-                      value={description} onChange={e => setDescription(e.target.value)}
-                      className="w-full mt-1 p-3.5 bg-natural-bg border border-natural-line rounded-2xl outline-none text-sm"
-                      placeholder={type === 'income' ? "Contoh: Bonus proyek web" : "Contoh: Beli kado ulang tahun"}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <option value="">Pilih Goal (Opsional)</option>
+                    {goals.map(goal => (
+                      <option key={goal.id} value={goal.id}>
+                        {goal.title} (Target: {formatCurrency(goal.targetAmount)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="text-[10px] font-bold text-natural-mute uppercase tracking-widest">Deskripsi / Catatan</label>
+                <input 
+                  type="text" 
+                  value={description} onChange={e => setDescription(e.target.value)}
+                  className="w-full mt-1 p-3.5 bg-natural-bg border border-natural-line rounded-2xl outline-none text-sm"
+                  placeholder={type === 'income' ? "Contoh: Bonus proyek web" : "Contoh: Beli kado ulang tahun"}
+                />
+              </div>
 
               <div>
                 <label className="text-[10px] font-bold text-natural-mute uppercase tracking-widest">Tanggal</label>
@@ -524,6 +567,8 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
               )}
             </div>
           </Card>
+
+          <SavingGoalsCard userId={user.uid} />
         </div>
 
         {/* Charts & Transactions List */}
@@ -531,7 +576,7 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <h3 className="font-serif italic text-natural-olive font-bold mb-6 text-[10px] uppercase tracking-widest flex items-center gap-2">
-                <TrendingUp size={14} /> Pemasukan vs Pengeluaran (6 Bln)
+                <TrendingUp size={14} /> Pemasukan vs Pengeluaran (3 Bln)
               </h3>
               <IncomeExpenseChart transactions={chartTxs} />
             </Card>
@@ -543,7 +588,7 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
             </Card>
             <Card className="md:col-span-2">
               <h3 className="font-serif italic text-natural-olive font-bold mb-6 text-[10px] uppercase tracking-widest flex items-center gap-2">
-                <TrendingUp size={14} /> Tren Saldo (6 Bln terakhir)
+                <TrendingUp size={14} /> Tren Saldo (3 Bln terakhir)
               </h3>
               <BalanceTrendChart transactions={chartTxs} />
             </Card>
@@ -619,7 +664,7 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
               </div>
             </div>
 
-            <div className="max-h-[600px] overflow-y-auto no-scrollbar">
+            <div className="overflow-y-auto no-scrollbar">
               {filteredTxs.length === 0 ? (
                 <div className="p-20 text-center">
                   <Search className="w-12 h-12 text-natural-line mx-auto mb-4 opacity-30" />
@@ -627,7 +672,7 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
                 </div>
               ) : (
                 <div className="flex flex-col">
-                  {filteredTxs.map(tx => (
+                  {paginatedTxs.map(tx => (
                     <motion.div 
                       layout
                       initial={{ opacity: 0 }}
@@ -661,7 +706,14 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
                                 type="number" 
                                 value={editData.amount || ''} 
                                 onChange={e => setEditData({...editData, amount: parseFloat(e.target.value)})}
-                                className="bg-white border rounded-xl px-3 py-1.5 text-xs w-24 outline-none"
+                                className="bg-white dark:bg-dark-card border rounded-xl px-3 py-1.5 text-xs w-24 outline-none"
+                              />
+                              <input 
+                                type="text" 
+                                value={editData.description || ''} 
+                                onChange={e => setEditData({...editData, description: e.target.value})}
+                                placeholder="Edit Deskripsi"
+                                className="bg-white dark:bg-dark-card border rounded-xl px-3 py-1.5 text-xs w-36 outline-none"
                               />
                               <div className="flex gap-1">
                                 <button onClick={handleUpdate} className="bg-natural-olive text-white p-1.5 rounded-lg"><RefreshCw size={14} /></button>
@@ -672,15 +724,15 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
                             <div onClick={() => { setEditingId(tx.id); setEditData(tx); }} className="cursor-pointer group">
                               <div className="flex items-center gap-2">
                                 <p className="font-serif font-bold text-natural-ink truncate group-hover:text-natural-olive transition-colors">
-                                  {tx.description && tx.category === 'lainnya' ? tx.description : getCategoryLabel(tx.category)}
+                                  {tx.description || getCategoryLabel(tx.category)}
                                 </p>
                                 {tx.category === 'tabungan' && (
                                   <span className="text-[8px] bg-blue-500 text-white px-2 py-0.5 rounded-full font-black tracking-tighter uppercase">Savings</span>
                                 )}
                               </div>
                               <div className="flex items-center gap-2 mt-0.5">
-                                {tx.description && tx.category !== 'lainnya' && (
-                                  <span className="text-[10px] text-natural-mute italic">{tx.description}</span>
+                                {tx.description && (
+                                  <span className="text-[10px] text-natural-mute italic">({getCategoryLabel(tx.category)})</span>
                                 )}
                                 <span className={cn(
                                   "text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest",
@@ -736,6 +788,43 @@ export const MoneyTracker = ({ user }: MoneyTrackerProps): React.ReactElement =>
                 </div>
               )}
             </div>
+            {Math.ceil(filteredTxs.length / 10) > 1 && (
+              <div className="p-4 border-t border-natural-line/30 flex items-center justify-between bg-natural-bg/10 flex-col sm:flex-row gap-3">
+                <p className="text-xs text-natural-mute">
+                  Menampilkan <strong>{Math.min((currentPage - 1) * 10 + 1, filteredTxs.length)}</strong> - <strong>{Math.min(currentPage * 10, filteredTxs.length)}</strong> dari <strong>{filteredTxs.length}</strong> transaksi
+                </p>
+                <div className="flex items-center gap-1.5">
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 border border-natural-line/40 rounded-xl text-natural-mute hover:text-natural-olive disabled:opacity-40 disabled:hover:text-natural-mute transition-all bg-white dark:bg-dark-card"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  {Array.from({ length: Math.ceil(filteredTxs.length / 10) }).map((_, idx) => (
+                    <button
+                      key={idx + 1}
+                      onClick={() => setCurrentPage(idx + 1)}
+                      className={cn(
+                        "w-8 h-8 rounded-xl text-xs font-bold transition-all",
+                        currentPage === idx + 1 
+                          ? "bg-natural-olive text-white shadow-sm"
+                          : "border border-natural-line/40 text-natural-mute hover:bg-natural-bg/50 hover:text-natural-ink bg-white dark:bg-dark-card"
+                      )}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredTxs.length / 10)))}
+                    disabled={currentPage === Math.ceil(filteredTxs.length / 10)}
+                    className="p-2 border border-natural-line/40 rounded-xl text-natural-mute hover:text-natural-olive disabled:opacity-40 disabled:hover:text-natural-mute transition-all bg-white dark:bg-dark-card"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
           </Card>
         </div>
       </div>

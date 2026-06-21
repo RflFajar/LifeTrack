@@ -119,7 +119,15 @@ service cloud.firestore {
       }
 
       match /weight_history/{entryId} {
-        allow read, write: if isOwner(userId) && isValidId(entryId);
+        allow list, get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(entryId);
+        allow delete: if isOwner(userId);
+      }
+
+      match /saving_goals/{goalId} {
+        allow list, get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(goalId);
+        allow delete: if isOwner(userId);
       }
 
       match /achievements/{achievementId} {
