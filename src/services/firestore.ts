@@ -66,6 +66,34 @@ const handleFirestoreError = (
   return errorInfo;
 };
 
+/**
+ * Recursively removes all undefined fields from an object or array to prevent Firestore SDK validation errors
+ */
+export const cleanUndefinedFields = (obj: any): any => {
+  if (obj === null || obj === undefined) return null;
+  
+  // Custom check for Firestore Timestamp or other system classes
+  if (obj.constructor && obj.constructor.name === 'Timestamp') {
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(cleanUndefinedFields);
+  }
+  
+  if (typeof obj === 'object') {
+    const newObj: any = {};
+    for (const key in obj) {
+      if (obj[key] !== undefined) {
+        newObj[key] = cleanUndefinedFields(obj[key]);
+      }
+    }
+    return newObj;
+  }
+  
+  return obj;
+};
+
 type ListenerCallback = (data: any[]) => void;
 
 interface ActiveListener {
@@ -100,7 +128,8 @@ export const safeAddDoc = async (
   successMsg: string = 'Data berhasil disimpan'
 ): Promise<string | null> => {
   try {
-    const res = await addDoc(collection(db, path), data);
+    const cleanedData = cleanUndefinedFields(data);
+    const res = await addDoc(collection(db, path), cleanedData);
     showToast(successMsg, 'success');
     notifyListeners(path);
     return res.id;
@@ -140,8 +169,9 @@ export const safeUpdateDoc = async (
   successMsg: string = 'Perubahan berhasil disimpan'
 ): Promise<boolean> => {
   try {
+    const cleanedData = cleanUndefinedFields(data);
     const docRef = doc(db, path, id);
-    await updateDoc(docRef, data);
+    await updateDoc(docRef, cleanedData);
     showToast(successMsg, 'success');
     notifyListeners(path);
     return true;
@@ -161,8 +191,9 @@ export const safeSetDoc = async (
   successMsg: string = 'Data berhasil disimpan'
 ): Promise<boolean> => {
   try {
+    const cleanedData = cleanUndefinedFields(data);
     const docRef = doc(db, path, id);
-    await setDoc(docRef, data, { merge: true });
+    await setDoc(docRef, cleanedData, { merge: true });
     showToast(successMsg, 'success');
     notifyListeners(path);
     return true;
@@ -199,7 +230,8 @@ export const fetchDocument = async (path: string, id: string) => {
 
 export const createDocument = async (path: string, data: DocumentData) => {
   try {
-    return await addDoc(collection(db, path), data);
+    const cleanedData = cleanUndefinedFields(data);
+    return await addDoc(collection(db, path), cleanedData);
   } catch (error) {
     handleFirestoreError(error, 'create', path, true);
     throw error;
@@ -208,8 +240,9 @@ export const createDocument = async (path: string, data: DocumentData) => {
 
 export const updateDocument = async (path: string, id: string, data: Partial<DocumentData>) => {
   try {
+    const cleanedData = cleanUndefinedFields(data);
     const docRef = doc(db, path, id);
-    await updateDoc(docRef, data);
+    await updateDoc(docRef, cleanedData);
   } catch (error) {
     handleFirestoreError(error, 'update', `${path}/${id}`, true);
     throw error;
@@ -218,8 +251,9 @@ export const updateDocument = async (path: string, id: string, data: Partial<Doc
 
 export const setDocument = async (path: string, id: string, data: DocumentData) => {
   try {
+    const cleanedData = cleanUndefinedFields(data);
     const docRef = doc(db, path, id);
-    await setDoc(docRef, data, { merge: true });
+    await setDoc(docRef, cleanedData, { merge: true });
   } catch (error) {
     handleFirestoreError(error, 'write', `${path}/${id}`, true);
     throw error;
