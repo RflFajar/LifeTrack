@@ -63,7 +63,20 @@ export function useSavingGoals(userId: string | undefined): {
 
   // Compute dynamic currentAmount based on transactions
   const computedGoals = useMemo(() => {
+    // List of goals that are still active
+    const activeGoalsList = goals.filter(g => !g.isCompleted && g.status !== 'completed');
+
     return goals.map(goal => {
+      // If goal is marked completed, freeze its amount at targetAmount so withdrawals don't reset it
+      if (goal.isCompleted || goal.status === 'completed') {
+        return {
+          ...goal,
+          status: 'completed' as const,
+          isCompleted: true,
+          currentAmount: goal.targetAmount
+        };
+      }
+
       // Find transactions explicitly linked to this goal, or implicitly via title match in the description
       const linkedTxs = transactions.filter(tx => {
         if (tx.goalId === goal.id) return true;
@@ -75,15 +88,15 @@ export function useSavingGoals(userId: string | undefined): {
         return tx.type === 'expense' ? sum + tx.amount : sum - tx.amount;
       }, 0);
 
-      // Distribute generic / unallocated 'tabungan' transactions to the first / oldest saving goal
+      // Distribute generic / unallocated 'tabungan' transactions to the default active saving goal
       const unallocatedTxs = transactions.filter(tx => {
         const hasExplicitLink = goals.some(g => tx.goalId === g.id || (tx.description && tx.description.toLowerCase().includes(g.title.toLowerCase())));
         return !hasExplicitLink;
       });
 
       if (unallocatedTxs.length > 0) {
-        // If there's only one goal, OR if this goal is the default target (oldest/first)
-        const isDefaultGoal = goals.length === 1 || goals[0].id === goal.id;
+        // Send unallocated tabungan to the default active goal
+        const isDefaultGoal = activeGoalsList.length > 0 && activeGoalsList[0].id === goal.id;
         if (isDefaultGoal) {
           const unallocatedDelta = unallocatedTxs.reduce((sum, tx) => {
             return tx.type === 'expense' ? sum + tx.amount : sum - tx.amount;
@@ -94,9 +107,12 @@ export function useSavingGoals(userId: string | undefined): {
 
       // Compute dynamic amount (stored initial value + transacted delta)
       const current = Math.max(0, (goal.currentAmount || 0) + transactionDelta);
+      const computedCurrentAmount = Math.min(current, goal.targetAmount);
+
       return {
         ...goal,
-        currentAmount: Math.min(current, goal.targetAmount)
+        currentAmount: computedCurrentAmount,
+        status: (goal.status || 'active') as 'active' | 'completed'
       };
     });
   }, [goals, transactions]);

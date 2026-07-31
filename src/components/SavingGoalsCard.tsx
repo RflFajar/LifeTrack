@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Target, 
@@ -8,8 +8,12 @@ import {
   X, 
   Calendar, 
   CheckCircle,
+  CheckCircle2,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Trophy,
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 import { useSavingGoals } from '../hooks/useSavingGoals';
 import { formatCurrency } from '../utils/formatters';
@@ -18,6 +22,7 @@ import { Button } from './ui/Button';
 import { showToast } from '../context/ToastContext';
 import { safeAddDoc } from '../services/firestore';
 import { Timestamp } from 'firebase/firestore';
+import { cn } from '../utils/cn';
 
 interface SavingGoalsCardProps {
   userId: string;
@@ -25,6 +30,7 @@ interface SavingGoalsCardProps {
 
 export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
   const { goals, loading, addGoal, updateGoal, deleteGoal } = useSavingGoals(userId);
+  const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -39,6 +45,9 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
   const [depositGoalId, setDepositGoalId] = useState<string | null>(null);
   const [depositValue, setDepositValue] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const activeGoals = useMemo(() => goals.filter(g => !g.isCompleted && g.status !== 'completed'), [goals]);
+  const completedGoals = useMemo(() => goals.filter(g => g.isCompleted || g.status === 'completed'), [goals]);
 
   const resetForm = () => {
     setTitle('');
@@ -73,7 +82,9 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
       currentAmount: currentVal,
       category,
       deadline: deadline || undefined,
-      description: ''
+      description: '',
+      isCompleted: false,
+      status: 'active'
     });
 
     if (goalId) {
@@ -102,6 +113,29 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
     if (txId) {
       setDepositGoalId(null);
       setDepositValue('');
+    }
+  };
+
+  const handleCompleteGoal = async (goal: any) => {
+    const success = await updateGoal(goal.id, {
+      isCompleted: true,
+      status: 'completed',
+      completedAt: new Date().toISOString().split('T')[0]
+    });
+    if (success) {
+      showToast(`🎉 Selamat! Goal "${goal.title}" telah diselesaikan & disimpan di Goal Selesai!`, 'success');
+      setActiveTab('completed');
+    }
+  };
+
+  const handleReopenGoal = async (goal: any) => {
+    const success = await updateGoal(goal.id, {
+      isCompleted: false,
+      status: 'active'
+    });
+    if (success) {
+      showToast(`Goal "${goal.title}" dipindahkan kembali ke Goal Aktif`, 'info');
+      setActiveTab('active');
     }
   };
 
@@ -138,17 +172,58 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
     }
   };
 
+  const displayedGoals = activeTab === 'active' ? activeGoals : completedGoals;
+
   return (
     <Card className="bg-natural-bg/50 border border-natural-line/80 dark:bg-dark-card/20 dark:border-white/5 rounded-[32px] p-4 sm:p-6 relative">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-serif italic text-natural-ink dark:text-dark-text font-bold flex items-center gap-2">
-          <Target size={20} className="text-natural-terracotta" /> Goal Tabungan
-        </h3>
-        {!isAdding && !editingId && (
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-2 border-b border-natural-line/30">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveTab('active')}
+            className={cn(
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+              activeTab === 'active' 
+                ? "bg-natural-olive text-white shadow-sm" 
+                : "bg-natural-bg dark:bg-dark-card/40 text-natural-mute hover:bg-natural-line/40"
+            )}
+          >
+            <Target size={13} />
+            <span>Goal Aktif</span>
+            <span className={cn(
+              "px-1.5 py-0.2 rounded-full text-[9px] font-black",
+              activeTab === 'active' ? "bg-white/20 text-white" : "bg-natural-line/60 text-natural-ink"
+            )}>
+              {activeGoals.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('completed')}
+            className={cn(
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+              activeTab === 'completed' 
+                ? "bg-emerald-600 text-white shadow-sm" 
+                : "bg-natural-bg dark:bg-dark-card/40 text-natural-mute hover:bg-natural-line/40"
+            )}
+          >
+            <Trophy size={13} />
+            <span>Goal Selesai</span>
+            {completedGoals.length > 0 && (
+              <span className={cn(
+                "px-1.5 py-0.2 rounded-full text-[9px] font-black",
+                activeTab === 'completed' ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-800"
+              )}>
+                {completedGoals.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {!isAdding && !editingId && activeTab === 'active' && (
           <button 
             id="add-saving-goal-btn"
             onClick={() => setIsAdding(true)}
-            className="text-[10px] font-bold text-natural-olive border border-natural-olive/30 px-3 py-1 rounded-full hover:bg-natural-olive hover:text-white transition-all uppercase tracking-widest flex items-center gap-1"
+            className="text-[10px] font-bold text-natural-olive border border-natural-olive/30 px-3 py-1 rounded-full hover:bg-natural-olive hover:text-white transition-all uppercase tracking-widest flex items-center gap-1 shrink-0 self-start sm:self-auto"
           >
             <Plus size={10} /> Tambah Goal
           </button>
@@ -182,7 +257,7 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                   required
                   onChange={e => setTitle(e.target.value)}
                   className="w-full mt-1 p-3 bg-natural-bg dark:bg-dark-bg-deep border border-natural-line/60 dark:border-white/5 rounded-xl outline-none text-xs"
-                  placeholder="Contoh: Beli iPhone 18, Liburan ke Bali"
+                  placeholder="Contoh: Beli Laptop Baru, Liburan ke Bali"
                 />
               </div>
 
@@ -266,10 +341,10 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
         </div>
       ) : (
         <div className="space-y-4">
-          {goals.map(goal => {
+          {displayedGoals.map(goal => {
             const percent = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
-            const remaining = goal.targetAmount - goal.currentAmount;
-            const isCompleted = goal.currentAmount >= goal.targetAmount;
+            const remaining = Math.max(0, goal.targetAmount - goal.currentAmount);
+            const isReached = goal.currentAmount >= goal.targetAmount || goal.isCompleted || goal.status === 'completed';
 
             let compactRemaining = formatCurrency(remaining);
             if (remaining >= 1_000_000) {
@@ -283,11 +358,16 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                 layout
                 key={goal.id} 
                 id={`goal-${goal.id}`}
-                className="bg-white dark:bg-dark-card border border-natural-line/45 dark:border-white/5 rounded-3xl p-4 sm:p-6 relative overflow-hidden group shadow-sm hover:shadow-md transition-all duration-300"
+                className={cn(
+                  "border rounded-3xl p-4 sm:p-6 relative overflow-hidden group shadow-sm transition-all duration-300",
+                  goal.isCompleted || goal.status === 'completed'
+                    ? "bg-emerald-50/50 dark:bg-emerald-950/10 border-emerald-200 dark:border-emerald-800/40"
+                    : "bg-white dark:bg-dark-card border-natural-line/45 dark:border-white/5 hover:shadow-md"
+                )}
               >
-                {isCompleted && (
-                  <div className="absolute top-0 right-0 bg-natural-olive text-white px-3 py-1 rounded-bl-2xl flex items-center gap-1 text-[9px] font-black uppercase tracking-widest shadow-sm">
-                    <CheckCircle size={10} /> Tercapai!
+                {isReached && (
+                  <div className="absolute top-0 right-0 bg-emerald-600 text-white px-3 py-1 rounded-bl-2xl flex items-center gap-1 text-[9px] font-black uppercase tracking-widest shadow-sm">
+                    <CheckCircle2 size={11} /> {goal.isCompleted ? 'Selesai & Disimpan' : 'Tercapai!'}
                   </div>
                 )}
 
@@ -313,13 +393,15 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                     </div>
                   ) : (
                     <div className="bg-white/80 dark:bg-dark-card/80 backdrop-blur-sm p-1 rounded-lg border border-natural-line/40 flex gap-0.5">
-                      <button 
-                        onClick={() => handleStartEdit(goal)}
-                        className="p-1 text-natural-mute hover:text-natural-olive rounded-md"
-                        title="Edit"
-                      >
-                        <Edit2 size={13} />
-                      </button>
+                      {!goal.isCompleted && (
+                        <button 
+                          onClick={() => handleStartEdit(goal)}
+                          className="p-1 text-natural-mute hover:text-natural-olive rounded-md"
+                          title="Edit"
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                      )}
                       <button 
                         onClick={() => setConfirmDeleteId(goal.id)}
                         className="p-1 text-natural-mute hover:text-red-500 rounded-md"
@@ -331,21 +413,30 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                   )}
                 </div>
 
-                <div className="mb-2.5">
+                <div className="mb-2.5 flex items-center gap-2">
                   <span className="inline-block text-[11px] bg-natural-peach/30 dark:bg-natural-peach/5 text-natural-terracotta dark:text-natural-terracotta px-3 py-0.5 rounded-full font-medium">
                     {goal.category || 'Impian'}
                   </span>
+                  {goal.completedAt && (
+                    <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold italic">
+                      • Diselesaikan {goal.completedAt}
+                    </span>
+                  )}
                 </div>
 
-                <h4 className="font-serif font-semibold text-natural-ink dark:text-dark-text text-xl mb-3.5 tracking-tight">
+                <h4 className="font-serif font-semibold text-natural-ink dark:text-dark-text text-xl mb-3.5 tracking-tight flex items-center gap-2">
                   {goal.title}
+                  {goal.isCompleted && <Trophy size={18} className="text-amber-500" />}
                 </h4>
 
                 <div className="space-y-3">
                   {/* Amount detail matching Terkumpul Rp 12.000.000 on left, / 15.000.000 on far right */}
                   <div className="flex flex-wrap gap-x-2 gap-y-1 justify-between items-baseline text-xs sm:text-sm font-numeric text-natural-mute">
                     <span className="truncate max-w-[160px] sm:max-w-none">
-                      Terkumpul <strong className="text-natural-ink dark:text-white font-medium font-serif">{formatCurrency(goal.currentAmount)}</strong>
+                      {goal.isCompleted ? 'Target Tercapai ' : 'Terkumpul '} 
+                      <strong className="text-natural-ink dark:text-white font-medium font-serif">
+                        {formatCurrency(goal.targetAmount)}
+                      </strong>
                     </span>
                     <span className="text-[10px] sm:text-xs text-natural-mute/70">
                       / {goal.targetAmount.toLocaleString('id-ID')}
@@ -357,7 +448,7 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                     <motion.div 
                        initial={{ width: 0 }}
                        animate={{ width: `${percent}%` }}
-                       className="h-full transition-all duration-1000 bg-natural-olive"
+                       className={cn("h-full transition-all duration-1000", goal.isCompleted ? "bg-emerald-600" : "bg-natural-olive")}
                     />
                   </div>
 
@@ -365,7 +456,7 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                   <div className="border-t border-natural-line/30 pt-3 flex flex-wrap gap-x-2 gap-y-2.5 justify-between items-center text-[11px] sm:text-xs">
                     <span className="text-natural-olive dark:text-emerald-400 font-semibold tracking-wide flex flex-wrap items-center gap-0.5">
                       <span>{percent.toFixed(0)}% tercapai</span>
-                      {!isCompleted && (
+                      {!isReached && (
                         <>
                           <span className="text-natural-mute/40 mx-1">&#183;</span>
                           <span className="text-natural-mute font-normal">sisa {compactRemaining}</span>
@@ -373,7 +464,7 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                       )}
                     </span>
 
-                    {!isCompleted && (
+                    {!goal.isCompleted && (
                       <div className="flex justify-end shrink-0">
                         {depositGoalId === goal.id ? (
                           <div className="flex gap-1 items-center animate-in slide-in-from-right-3 duration-250">
@@ -387,13 +478,13 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                             />
                             <button 
                               onClick={() => handleQuickAddFunds(goal)}
-                              className="bg-natural-olive hover:bg-natural-olive/95 text-white text-[11px] px-2 py-1 rounded-md font-semibold"
+                              className="bg-natural-olive hover:bg-natural-olive/95 text-white text-[11px] px-2 py-1 rounded-md font-semibold cursor-pointer"
                             >
                               Sip
                             </button>
                             <button 
                               onClick={() => setDepositGoalId(null)}
-                              className="bg-natural-line text-natural-mute text-[11px] px-1.5 py-1 rounded-md mb-0"
+                              className="bg-natural-line text-natural-mute text-[11px] px-1.5 py-1 rounded-md mb-0 cursor-pointer"
                             >
                               x
                             </button>
@@ -404,24 +495,61 @@ export const SavingGoalsCard = ({ userId }: SavingGoalsCardProps) => {
                               setDepositGoalId(goal.id);
                               setDepositValue('');
                             }}
-                            className="font-semibold text-natural-olive hover:text-natural-terracotta transition-colors flex items-center gap-1 text-sm group/btn"
+                            className="font-semibold text-natural-olive hover:text-natural-terracotta transition-colors flex items-center gap-1 text-sm group/btn cursor-pointer"
                           >
                             <span className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform font-serif">↗</span> Tabung
                           </button>
                         )}
                       </div>
                     )}
+
+                    {goal.isCompleted && (
+                      <button
+                        onClick={() => handleReopenGoal(goal)}
+                        className="text-[10px] font-bold text-natural-mute hover:text-natural-olive flex items-center gap-1 transition-colors cursor-pointer"
+                        title="Pindahkan kembali ke Goal Aktif"
+                      >
+                        <RotateCcw size={11} /> Buka Kembali Goal
+                      </button>
+                    )}
                   </div>
+
+                  {/* Completion Action Button for Active Goals that reached 100% */}
+                  {!goal.isCompleted && isReached && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="pt-2"
+                    >
+                      <button
+                        onClick={() => handleCompleteGoal(goal)}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                      >
+                        <Trophy size={15} />
+                        <span>Klaim & Selesaikan Goal Ini 🎉</span>
+                      </button>
+                    </motion.div>
+                  )}
                 </div>
               </motion.div>
             );
           })}
 
-          {goals.length === 0 && (
-            <div className="text-center py-6 border border-dashed border-natural-line dark:border-white/5 rounded-3xl p-6">
-              <Target className="w-10 h-10 text-natural-line mx-auto mb-2 opacity-30" />
-              <p className="text-xs text-natural-mute italic">Belum ada tujuan tabungan.</p>
-              <p className="text-[10px] text-natural-mute italic mt-1">Gunakan tombol "Tambah Goal" di atas untuk mencatat target impian Anda!</p>
+          {displayedGoals.length === 0 && (
+            <div className="text-center py-8 border border-dashed border-natural-line dark:border-white/5 rounded-3xl p-6 bg-natural-bg/30">
+              {activeTab === 'active' ? (
+                <>
+                  <Target className="w-10 h-10 text-natural-line mx-auto mb-2 opacity-30" />
+                  <p className="text-xs text-natural-mute italic">Belum ada tujuan tabungan aktif.</p>
+                  <p className="text-[10px] text-natural-mute italic mt-1">Gunakan tombol "+ Tambah Goal" di atas untuk mencatat target impian Anda!</p>
+                </>
+              ) : (
+                <>
+                  <Trophy className="w-10 h-10 text-amber-500/40 mx-auto mb-2" />
+                  <p className="text-xs text-natural-mute italic">Belum ada goal yang diselesaikan.</p>
+                  <p className="text-[10px] text-natural-mute italic mt-1">Saat goal aktif Anda mencapai 100%, klik "Klaim & Selesaikan Goal" untuk menyimpannya di sini!</p>
+                </>
+              )}
             </div>
           )}
         </div>

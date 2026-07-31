@@ -46,5 +46,8 @@ export interface SavingGoal {
   category?: string;
   description?: string;
   createdAt: string;
+  isCompleted?: boolean;
+  completedAt?: string;
+  status?: 'active' | 'completed';
 }
 
